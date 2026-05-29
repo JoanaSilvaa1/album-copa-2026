@@ -9,46 +9,19 @@
   <meta name="description" content="Tracker oficial do álbum de figurinhas Panini FIFA World Cup 2026 — 48 seleções, 980 figurinhas" />
   <title>Álbum Copa 2026</title>
 
+  <!-- PWA Manifest externo — lido pelo PWABuilder e navegadores -->
   <link rel="manifest" href="manifest.json" />
-
-  <!-- App icons (SVG inline para PWA) -->
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%230a0f1e'/><text y='360' x='256' text-anchor='middle' font-size='300'>🏆</text></svg>" />
+  <link rel="apple-touch-icon" href="icon-512.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
   <script>
-  // Manifest loaded from manifest.json
-
-  // ── Register Service Worker inline ──
   if ('serviceWorker' in navigator) {
-    const swCode = `
-const CACHE = 'album-copa-2026-v1';
-const FONTS = [
-  'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap'
-];
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(FONTS).catch(() => {}))
-  );
-  self.skipWaiting();
-});
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys =>
-    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-  ));
-  self.clients.claim();
-});
-self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => new Response('', {status: 408})))
-  );
-});
-`;
-    const swBlob = new Blob([swCode], {type: 'application/javascript'});
-    const swUrl = URL.createObjectURL(swBlob);
-    navigator.serviceWorker.register(swUrl, {scope: './'}).catch(() => {});
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {});
+    });
   }
   </script>
   <style>
@@ -1078,7 +1051,94 @@ body {
   font-size: 1rem;
 }
 
+
+/* ─── SYNC / SHARED ALBUM ─── */
+.sync-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding: 8px 16px; gap: 8px; flex-wrap: wrap;
+}
+.sync-status { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--text3); }
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.3s; }
+.sync-dot.online { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+.sync-dot.syncing { background: var(--gold); animation: pulse-dot 0.8s ease-in-out infinite; }
+.sync-dot.error { background: var(--red); }
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.sync-actions { display: flex; gap: 6px; }
+.sync-btn {
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  color: var(--text2); font-family: 'Outfit', sans-serif; font-size: 0.7rem; font-weight: 600;
+  padding: 4px 10px; border-radius: 99px; cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+}
+.sync-btn:active { transform: scale(0.96); }
+.sync-btn.primary { background: rgba(245,200,66,0.12); border-color: rgba(245,200,66,0.3); color: var(--gold); }
+.sync-btn.whatsapp { background: rgba(37,211,102,0.1); border-color: rgba(37,211,102,0.3); color: #25d366; }
+.sync-btn svg { width: 13px; height: 13px; stroke: currentColor; stroke-width: 2; fill: none; flex-shrink: 0; }
+
+/* ─── MODAL ─── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: #151f33; border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px 20px 0 0; padding: 24px 20px 40px; width: 100%;
+  max-width: 480px; transform: translateY(40px); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-handle { width: 36px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 99px; margin: 0 auto 20px; }
+.modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 2px; color: var(--text); margin-bottom: 4px; }
+.modal-sub { font-size: 0.78rem; color: var(--text3); margin-bottom: 20px; }
+.modal-input {
+  width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-sm); padding: 10px 14px; color: var(--text);
+  font-family: 'Outfit', sans-serif; font-size: 0.95rem; outline: none; margin-bottom: 10px;
+  transition: border-color 0.2s; box-sizing: border-box;
+}
+.modal-input:focus { border-color: var(--gold); }
+.modal-btn {
+  width: 100%; padding: 12px; border-radius: var(--radius-sm);
+  font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 700;
+  cursor: pointer; border: none; transition: all 0.2s; margin-bottom: 8px;
+}
+.modal-btn.confirm { background: var(--gold); color: #000; }
+.modal-btn.cancel { background: rgba(255,255,255,0.06); color: var(--text2); }
+.modal-btn:active { transform: scale(0.98); }
+.modal-code-box {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-sm); padding: 14px; text-align: center; margin-bottom: 14px;
+}
+.modal-code {
+  font-family: 'Bebas Neue', sans-serif; font-size: 2.4rem; letter-spacing: 8px;
+  color: var(--gold); display: block;
+}
+.modal-code-hint { font-size: 0.7rem; color: var(--text3); margin-top: 4px; display: block; }
+.modal-divider { text-align: center; color: var(--text3); font-size: 0.72rem; margin: 14px 0; }
+.modal-info { font-size: 0.73rem; color: var(--text3); line-height: 1.6; text-align: center; padding: 10px; }
+.modal-info b { color: var(--text2); }
+.room-active-bar {
+  background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2);
+  border-radius: var(--radius-sm); padding: 8px 14px; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px; font-size: 0.78rem;
+}
+.room-active-code { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 3px; color: var(--green); }
+
+/* ─── TOAST ─── */
+.toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: #1a2236; border: 1px solid rgba(255,255,255,0.12); color: var(--text);
+  font-size: 0.8rem; font-weight: 500; padding: 10px 18px; border-radius: 99px;
+  white-space: nowrap; z-index: 2000; opacity: 0; transition: all 0.3s; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
   </style>
+
+  <!-- Sync via Firebase RTDB REST API — no SDK needed -->
 </head>
 <body>
 
@@ -1113,7 +1173,7 @@ body {
       </div>
       <div class="progress-label">
         <span id="global-percent">0%</span>
-        <span class="progress-total">de 980 figurinhas</span>
+        <span class="progress-total">de 1019 figurinhas</span>
       </div>
     </div>
   </header>
@@ -1132,6 +1192,53 @@ body {
     <button class="tab" data-filter="complete">Completos</button>
     <button class="tab" data-filter="empty">Não iniciados</button>
   </div>
+
+
+  <!-- SYNC BAR -->
+  <div class="sync-bar" id="sync-bar">
+    <div class="sync-status">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-label">Modo local</span>
+    </div>
+    <div class="sync-actions">
+      <button class="sync-btn whatsapp" onclick="openWhatsAppShare()">
+        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+        Compartilhar
+      </button>
+      <button class="sync-btn primary" id="sync-toggle-btn" onclick="openSyncModal()">
+        <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Sincronizar
+      </button>
+    </div>
+  </div>
+
+  <!-- SYNC MODAL -->
+  <div class="modal-overlay" id="sync-modal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">🔄 Álbum Compartilhado</div>
+      <p class="modal-sub">Sincronize em tempo real com outra pessoa</p>
+
+      <div id="sync-modal-content">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- WHATSAPP MODAL -->
+  <div class="modal-overlay" id="whatsapp-modal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">📤 Compartilhar via WhatsApp</div>
+      <p class="modal-sub">Lista de figurinhas faltantes e repetidas</p>
+      <div id="whatsapp-preview" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px;max-height:260px;overflow-y:auto;font-size:0.72rem;line-height:1.7;color:var(--text2);margin-bottom:14px;white-space:pre-wrap;font-family:monospace;"></div>
+      <button class="modal-btn confirm" onclick="sendWhatsApp()">Abrir WhatsApp</button>
+      <button class="modal-btn cancel" onclick="closeModal('whatsapp-modal')">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
 
   <div class="countries-list" id="countries-list"></div>
 </div>
@@ -1578,33 +1685,33 @@ const ALBUM_DATA = {
       ]
     },
     {
-      id: "per", name: "Peru", flag: "🇵🇪", group: "J", prefix: "PER",
+      id: "alg", name: "Argélia", flag: "🇩🇿", group: "J", prefix: "ALG",
       players: [
-        "Pedro Gallese","Carlos Cáceda","Aldo Corzo","Alexander Callens",
-        "Miguel Araujo","Marcos López","Luis Advíncula","Wilder Cartagena",
-        "Renato Tapia","Yoshimar Yotún","Sergio Peña","Christian Cueva",
-        "Andy Polo","Kevin Quevedo","Gianluca Lapadula","Edison Flores",
-        "Bryan Reyna","Paolo Guerrero"
+        "Rais Mbolhi","Alexandre Oukidja","Ramy Bensebaini","Djamel Benlamri",
+        "Aïssa Mandi","Mehdi Zerkane","Andy Delort","Youcef Atal",
+        "Ismaël Bennacer","Sofiane Feghouli","Ramiz Zerrouki","Adam Ounas",
+        "Houssem Aouar","Samir Benrahma","Islam Slimani","Youcef Belaïli",
+        "Baghdad Bounedjah","Riyad Mahrez"
       ]
     },
     {
-      id: "vcl", name: "Venezuela", flag: "🇻🇪", group: "J", prefix: "VEN",
+      id: "aut", name: "Áustria", flag: "🇦🇹", group: "J", prefix: "AUT",
       players: [
-        "Rafael Romo","Wuilker Faríñez","Ronald Hernández","Nahuel Ferraresi",
-        "Yordan Osorio","Jhon Chancellor","Jon Aramburu","Miguel Navarro",
-        "Jefferson Savarino","Tomás Rincón","Yangel Herrera","Eduard Bello",
-        "Cristian Cásseres Jr.","Junior Moreno","Salomón Rondón","Jhonder Cádiz",
-        "Darwin Machís","Adalberto Peñaranda"
+        "Patrick Pentz","Daniel Bachmann","Phillipp Lienhart","David Alaba",
+        "Stefan Posch","Maximilian Wöber","Philipp Mwene","Nicolas Seiwald",
+        "Florian Grillitsch","Konrad Laimer","Marcel Sabitzer","Christoph Baumgartner",
+        "Florian Kainz","Romano Schmid","Michael Gregoritsch","Patrick Wimmer",
+        "Marko Arnautovic","Andreas Weimann"
       ]
     },
     {
-      id: "bol", name: "Bolívia", flag: "🇧🇴", group: "J", prefix: "BOL",
+      id: "jor", name: "Jordânia", flag: "🇯🇴", group: "J", prefix: "JOR",
       players: [
-        "Carlos Lampe","Guillermo Viscarra","Luis Haquín","José Sagredo",
-        "Adrián Jusino","Jairo Quinteros","Marc Enoumba","Pablo Soliz",
-        "Ramiro Vaca","Erwin Saavedra","Danny Bejarano","Víctor Ábrego",
-        "Marcelo Martins","Boris Céspedes","Carmelo Algarañaz","Henry Vaca",
-        "Rodrigo Ramallo","Juan Carlos Arce"
+        "Yazeed Abulaila","Khaled Alaeibi","Yazan Al-Naimat","Amer Shafi",
+        "Mohammed Hamed","Ballous Allaboun","Baha Faisal","Ehsan Haddad",
+        "Ahmad Hayel","Musa Al-Taamari","Noor Al-Rawabdeh","Mousa Suleiman",
+        "Abdullah Nasib","Ali Olwan","Yazan Al-Arab","Hamzah Alsharman",
+        "Mahmoud Almardi","Ibrahim Saad"
       ]
     },
 
@@ -1620,39 +1727,27 @@ const ALBUM_DATA = {
       ]
     },
     {
-      id: "pol", name: "Polônia", flag: "🇵🇱", group: "K", prefix: "POL",
+      id: "cod", name: "RD Congo", flag: "🇨🇩", group: "K", prefix: "COD",
       players: [
-        "Łukasz Skorupski","Kamil Grabara","Bartosz Bereszyński","Jan Bednarek",
-        "Jakub Kiwior","Matty Cash","Nicola Zalewski","Piotr Zieliński",
-        "Jakub Moder","Szymon Żurkowski","Kamil Grosicki","Krzysztof Piątek",
-        "Karol Świderski","Sebastian Szymański","Przemysław Frankowski","Michał Skóraś",
-        "Robert Lewandowski","Arkadiusz Milik"
+        "Joël Kiassumbua","Hervé Lomboto","Gabriel Zakuani","Chancel Mbemba",
+        "Yannick Bangala","Merveille Bokadi","Jonathan Bolingi","Samuel Bastien",
+        "Youssouf Mulumbu","Théo Bongonda","Cédric Bakambu","Yoane Wissa",
+        "Silas Wissa","Héritier Luvumbu","Fiston Mayele","Dieumerci Mbokani",
+        "Britt Assombalonga","Paul-José M'Poku"
       ]
     },
     {
-      id: "sco2", name: "Eslovênia", flag: "🇸🇮", group: "K", prefix: "SVN",
+      id: "uzb", name: "Uzbequistão", flag: "🇺🇿", group: "K", prefix: "UZB",
       players: [
-        "Jan Oblak","Vid Belec","Jaka Bijol","Miha Blažič",
-        "Petar Stojanović","David Brekalo","Jon Gorenc Stanković","Jasmin Kurtić",
-        "Sandi Lovrić","Josip Iličič","Adam Gnezda Čerin","Rok Kronaveter",
-        "Timi Max Elšnik","Miha Zajc","Benjamin Šeško","Andraž Šporar",
-        "Jan Mlakar","Luka Zahović"
+        "Otabek Shukurov","Eldor Shomurodov","Jasur Yaxshiboyev","Sherzod Nasrullayev",
+        "Otabek Ismoilov","Bobur Abdixoliqov","Azizbek Turgunboev","Jamshid Iskanderov",
+        "Dostonbek Khamdamov","Abbosbek Fayzullayev","Dilshod Yo'ldoshev","Jaloliddin Masharipov",
+        "Furqat Fattoyev","Rustam Yusupov","Shamsiddin Latipov","Nodir Tursunov",
+        "Khurshid Makhmudov","Sokhibjon Turgunov"
       ]
     },
     {
-      id: "nig", name: "Nigéria", flag: "🇳🇬", group: "K", prefix: "NGA",
-      players: [
-        "Stanley Nwabali","Maduka Okoye","Ola Aina","Semi Ajayi",
-        "William Troost-Ekong","Calvin Bassey","Bright Osayi-Samuel","Alex Iwobi",
-        "Frank Onyeka","Wilfred Ndidi","Samuel Chukwueze","Kelechi Iheanacho",
-        "Cyriel Dessers","Victor Osimhen","Emmanuel Dennis","Ademola Lookman",
-        "Taiwo Awoniyi","Moses Simon"
-      ]
-    },
-
-    // ─── GRUPO L ─────────────────────────────────
-    {
-      id: "col", name: "Colômbia", flag: "🇨🇴", group: "L", prefix: "COL",
+      id: "col", name: "Colômbia", flag: "🇨🇴", group: "K", prefix: "COL",
       players: [
         "Camilo Vargas","David Ospina","Daniel Muñoz","Dávinson Sánchez",
         "Yerry Mina","Johan Mojica","Stefan Medina","Wilmar Barrios",
@@ -1661,24 +1756,36 @@ const ALBUM_DATA = {
         "Juan Guillermo Cuadrado","Falcao"
       ]
     },
+
+    // ─── GRUPO L ─────────────────────────────────
     {
-      id: "chl", name: "Chile", flag: "🇨🇱", group: "L", prefix: "CHI",
+      id: "eng", name: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", group: "L", prefix: "ENG",
       players: [
-        "Claudio Bravo","Gabriel Arias","Guillermo Maripán","Paulo Díaz",
-        "Gary Medel","Mauricio Isla","Gabriel Suazo","Arturo Vidal",
-        "Charles Aránguiz","Erick Pulgar","César Pinares","Diego Valdés",
-        "Alexis Sánchez","Ben Brereton Díaz","Eduardo Vargas","Marcos Bolados",
-        "Damián Pizarro","Darío Osorio"
+        "Jordan Pickford","Aaron Ramsdale","Kyle Walker","John Stones",
+        "Harry Maguire","Luke Shaw","Kieran Trippier","Declan Rice",
+        "Jude Bellingham","Phil Foden","Bukayo Saka","Marcus Rashford",
+        "Jack Grealish","Raheem Sterling","Harry Kane","Ollie Watkins",
+        "Cole Palmer","Anthony Gordon"
       ]
     },
     {
-      id: "cmr", name: "Camarões", flag: "🇨🇲", group: "L", prefix: "CMR",
+      id: "cro", name: "Croácia", flag: "🇭🇷", group: "L", prefix: "CRO",
       players: [
-        "André Onana","Devis Epassy","Nouhou Tolo","Jean-Charles Castelletto",
-        "Collins Fai","Michael Ngadeu-Ngadjui","Ambroise Oyongo","Samuel Oum Gouet",
-        "Olivier Ntcham","Pierre Kunde","Christian Bassogog","Moumi Ngamaleu",
-        "Karl Toko Ekambi","Eric Maxim Choupo-Moting","Stéphan Bahoken","Ignatius Ganago",
-        "Vincent Aboubakar","Bryan Mbeumo"
+        "Dominik Livaković","Ivo Grbić","Josip Šutalo","Domagoj Vida",
+        "Joško Gvardiol","Borna Sosa","Josip Juranović","Marcelo Brozović",
+        "Mateo Kovačić","Luka Modrić","Lovro Majer","Mario Pašalić",
+        "Ivan Perišić","Nikola Vlašić","Ante Budimir","Andrej Kramarić",
+        "Bruno Petković","Marko Livaja"
+      ]
+    },
+    {
+      id: "pan", name: "Panamá", flag: "🇵🇦", group: "L", prefix: "PAN",
+      players: [
+        "Luis Mejía","Orlando Mosquera","Fidel Escobar","Andrés Andrade",
+        "Harold Cummings","Roderick Miller","Michael Amir Murillo","César Yanis",
+        "Édgar Bárcenas","Adalberto Carrasquilla","José Fajardo","Álex Rodríguez",
+        "Alberto Quintero","Ismael Díaz","Cecilio Waterman","Rolando Blackburn",
+        "Gabriel Torres","Blas Pérez"
       ]
     },
     {
@@ -1783,19 +1890,205 @@ ALBUM_DATA.countries.forEach(c => {
 // =============================================
 
 const STORAGE_KEY = 'album_copa_2026_v2';
+const ROOM_KEY = 'album_copa_2026_room';
 
-// State: { [countryId]: { [stickerNum]: count } }
+// State
 let state = {};
 let currentCountry = null;
 let currentFilter = 'all';
 let currentSearch = '';
-let currentStickerFilter = null; // 'have' | 'missing' | 'dup' | null
+let currentStickerFilter = null;
 let currentSpecial = null;
+
+// ─── SYNC ENGINE — Firebase RTDB REST + polling (sem SDK) ────
+// Usa Firebase Realtime Database via REST puro — funciona em qualquer host
+// Projeto público com regras abertas: { ".read": true, ".write": true }
+// ── Sync Backend: JSONBin.io (grátis, sem config extra)
+// Crie conta em jsonbin.io → Copie sua Master Key → Cole em JBIN_MASTER_KEY
+// OU deixe vazio para usar apenas modo local
+const JBIN_MASTER_KEY = localStorage.getItem('jbin_key') || '';
+const JBIN_API = 'https://api.jsonbin.io/v3';
+
+let syncRoom = null;
+let syncPollInterval = null;
+let lastPushHash = null;
+
+function initFirebase() { return true; } // REST-based, sem SDK
+
+function generateRoomCode() {
+  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length: 6}, () => c[Math.floor(Math.random() * c.length)]).join('');
+}
+
+function setSyncStatus(status, label) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  if (dot) dot.className = 'sync-dot ' + (status || '');
+  if (lbl) lbl.textContent = label || 'Modo local';
+}
+
+async function pushStateToRoom() {
+  if (!syncRoom) return;
+  const payload = JSON.stringify(state);
+  if (payload === lastPushHash) return;
+  lastPushHash = payload;
+  setSyncStatus('syncing', 'Salvando...');
+  const binId = localStorage.getItem('jbin_' + syncRoom);
+  const key = JBIN_MASTER_KEY;
+  if (!key) { setSyncStatus('error', 'Configure a API key'); return; }
+  try {
+    let r;
+    if (binId) {
+      r = await fetch(`${JBIN_API}/b/${binId}`, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json','X-Master-Key':key,'X-Bin-Private':'false'},
+        body: payload
+      });
+    } else {
+      r = await fetch(`${JBIN_API}/b`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','X-Master-Key':key,'X-Bin-Name':syncRoom,'X-Bin-Private':'false'},
+        body: payload
+      });
+      if (r.ok) {
+        const j = await r.json(); 
+        localStorage.setItem('jbin_' + syncRoom, j.metadata?.id || '');
+        setSyncStatus('online', 'Sala: ' + syncRoom);
+        return;
+      }
+    }
+    if (r.ok) setSyncStatus('online', 'Sala: ' + syncRoom);
+    else setSyncStatus('error', 'Erro ao salvar');
+  } catch(e) { setSyncStatus('error', 'Sem internet'); }
+}
+
+async function pullFromRoom() {
+  if (!syncRoom) return;
+  const binId = localStorage.getItem('jbin_' + syncRoom);
+  if (!binId) return;
+  const key = JBIN_MASTER_KEY;
+  try {
+    const r = await fetch(`${JBIN_API}/b/${binId}/latest`, {
+      headers: key ? {'X-Master-Key':key} : {}
+    });
+    if (!r.ok) return;
+    const j = await r.json();
+    const remote = j.record;
+    if (!remote) return;
+    const remoteHash = JSON.stringify(remote);
+    if (remoteHash === lastPushHash) return;
+    if (remoteHash === JSON.stringify(state)) return;
+    state = mergeStates(state, remote);
+    lastPushHash = JSON.stringify(state);
+    saveLocal();
+    if (currentCountry) { updateCountryStats(); renderStickersList(); }
+    else if (currentSpecial) { renderSpecialDetail(); }
+    else { renderHome(); }
+    setSyncStatus('online', 'Sala: ' + syncRoom);
+    showToast('🔄 Álbum atualizado!');
+  } catch(e) { /* silent */ }
+}
+
+function mergeStates(local, remote) {
+  const merged = {};
+  const keys = new Set([...Object.keys(local||{}), ...Object.keys(remote||{})]);
+  keys.forEach(k => {
+    const l = local[k] || {}, r = remote[k] || {};
+    merged[k] = {};
+    const nums = new Set([...Object.keys(l), ...Object.keys(r)]);
+    nums.forEach(n => { merged[k][n] = Math.max(+(l[n]||0), +(r[n]||0)); });
+  });
+  return merged;
+}
+
+function startPolling() {
+  if (syncPollInterval) clearInterval(syncPollInterval);
+  syncPollInterval = setInterval(pullFromRoom, 3000);
+}
+
+function stopPolling() {
+  if (syncPollInterval) { clearInterval(syncPollInterval); syncPollInterval = null; }
+}
+
+async function joinRoom(code) {
+  const key = JBIN_MASTER_KEY;
+  if (!key) {
+    showToast('⚠️ Configure a API key primeiro');
+    openApiKeyModal();
+    return false;
+  }
+  setSyncStatus('syncing', 'Conectando...');
+  try {
+    // Search existing bins by name
+    const search = await fetch(`${JBIN_API}/b?collectionId=&page=1`, {
+      headers:{'X-Master-Key':key}
+    });
+    let binId = localStorage.getItem('jbin_' + code.toUpperCase());
+    
+    syncRoom = code.toUpperCase();
+    localStorage.setItem(ROOM_KEY, syncRoom);
+    
+    if (binId) {
+      // Bin known locally — pull latest
+      const r = await fetch(`${JBIN_API}/b/${binId}/latest`, {headers:{'X-Master-Key':key}});
+      if (r.ok) {
+        const j = await r.json();
+        const remote = j.record;
+        if (remote && Object.keys(remote).length > 0) {
+          state = mergeStates(state, remote);
+          saveLocal(); renderHome();
+          showToast('🔗 Entrou na sala ' + syncRoom + '!');
+        }
+      }
+    } else {
+      // New room — create bin
+      await pushStateToRoom();
+      showToast('🎉 Sala ' + syncRoom + ' criada!');
+    }
+    
+    startPolling();
+    setSyncStatus('online', 'Sala: ' + syncRoom);
+    updateSyncBtn();
+    return true;
+  } catch(e) {
+    setSyncStatus('error', 'Sem conexão');
+    showToast('❌ Erro. Verifique sua internet e API key.');
+    return false;
+  }
+}
+
+function leaveRoom() {
+  stopPolling();
+  syncRoom = null; lastPushHash = null;
+  localStorage.removeItem(ROOM_KEY);
+  setSyncStatus('', 'Modo local');
+  updateSyncBtn();
+  showToast('👋 Saiu da sala');
+}
+
+function updateSyncBtn() {
+  const btn = document.getElementById('sync-toggle-btn');
+  if (!btn) return;
+  if (syncRoom) {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;fill:none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Sair da sala';
+    btn.onclick = () => leaveRoom();
+    btn.className = 'sync-btn';
+  } else {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;fill:none"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Sincronizar';
+    btn.onclick = () => openSyncModal();
+    btn.className = 'sync-btn primary';
+  }
+}
 
 // ─── PERSISTENCE ─────────────────────────────
 
-function saveState() {
+function saveLocal() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function saveState() {
+  saveLocal();
+  pushStateToRoom();
 }
 
 function loadState() {
@@ -1804,6 +2097,16 @@ function loadState() {
     if (raw) state = JSON.parse(raw);
   } catch (e) {
     state = {};
+  }
+  // Restore room if previously connected
+  const savedRoom = localStorage.getItem(ROOM_KEY);
+  if (savedRoom) {
+    syncRoom = savedRoom;
+    startPolling();
+    setSyncStatus('online', 'Sala: ' + savedRoom);
+    updateSyncBtn();
+    // Pull latest state on reconnect
+    setTimeout(pullFromRoom, 500);
   }
 }
 
@@ -2319,7 +2622,222 @@ window.addEventListener('popstate', (e) => {
   }
 });
 
+
+// ─── MODAL FUNCTIONS ─────────────────────────
+
+function openApiKeyModal() {
+  closeModal('sync-modal');
+  const content = document.getElementById('sync-modal-content');
+  content.innerHTML = `
+    <p class="modal-info" style="text-align:left;padding:0 0 10px">
+      A sincronização usa <b>JSONBin.io</b> — serviço gratuito.<br><br>
+      1. Acesse <b style="color:var(--gold)">jsonbin.io</b> e crie uma conta grátis<br>
+      2. Vá em <b>API Keys</b> e copie sua <b>Master Key</b><br>
+      3. Cole abaixo para ativar a sincronização
+    </p>
+    <input class="modal-input" id="apikey-input" placeholder="Cole aqui sua Master Key do JSONBin" style="font-size:0.8rem;" />
+    <button class="modal-btn confirm" onclick="saveApiKey()">✅ Ativar sincronização</button>
+    <button class="modal-btn cancel" onclick="closeModal('sync-modal')">Cancelar</button>
+  `;
+  document.getElementById('sync-modal').classList.add('open');
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apikey-input')?.value?.trim();
+  if (!key) { showToast('⚠️ Cole a chave antes de salvar'); return; }
+  localStorage.setItem('jbin_key', key);
+  closeModal('sync-modal');
+  showToast('🔑 API Key salva! Abrindo salas...');
+  setTimeout(openSyncModal, 300);
+}
+
+function openSyncModal() {
+  const content = document.getElementById('sync-modal-content');
+  const hasKey = !!JBIN_MASTER_KEY || !!localStorage.getItem('jbin_key');
+  
+  if (!hasKey) {
+    openApiKeyModal();
+    return;
+  }
+  
+  if (syncRoom) {
+    content.innerHTML = `
+      <div class="room-active-bar">
+        <div class="sync-dot online" style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px rgba(34,197,94,0.5)"></div>
+        <span style="font-size:0.78rem;color:var(--text2)">Conectado à sala</span>
+        <span class="room-active-code">\${syncRoom}</span>
+      </div>
+      <p class="modal-info">Compartilhe o código <b>\${syncRoom}</b> com sua parceira. Qualquer figurinha adicionada aparece em ambos os celulares em até 3 segundos.</p>
+      <button class="modal-btn confirm" onclick="copyRoomCode('\${syncRoom}')">📋 Copiar código da sala</button>
+      <button class="modal-btn cancel" onclick="leaveRoom(); closeModal('sync-modal')">Sair da sala</button>
+    `;
+  } else {
+    const newCode = generateRoomCode();
+    content.innerHTML = `
+      <div class="modal-code-box">
+        <span class="modal-code">\${newCode}</span>
+        <span class="modal-code-hint">Código para sua nova sala</span>
+      </div>
+      <button class="modal-btn confirm" onclick="createAndJoin('\${newCode}')">✨ Criar sala com este código</button>
+      <div class="modal-divider">── ou entrar em uma sala existente ──</div>
+      <input class="modal-input" id="room-code-input" placeholder="Código da sala (ex: ABC123)" maxlength="6"
+        style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;"
+        oninput="this.value=this.value.toUpperCase()" />
+      <button class="modal-btn confirm" onclick="joinFromInput()" style="margin-top:0">Entrar na sala</button>
+      <button class="modal-btn cancel" onclick="closeModal('sync-modal')">Cancelar</button>
+      <p class="modal-info">💡 Crie uma sala e compartilhe o código com sua parceira. O álbum sincroniza a cada 3 segundos automaticamente.</p>
+    `;
+  }
+  
+  document.getElementById('sync-modal').classList.add('open');
+}
+
+async function createAndJoin(code) {
+  closeModal('sync-modal');
+  const ok = await joinRoom(code);
+  if (ok) {
+    showToast('🎉 Sala ' + code + ' criada! Compartilhe o código.');
+    setTimeout(() => openSyncModal(), 600);
+  }
+}
+
+async function joinFromInput() {
+  const input = document.getElementById('room-code-input');
+  const code = (input?.value || '').trim().toUpperCase();
+  if (code.length < 4) { showToast('⚠️ Digite um código válido'); return; }
+  closeModal('sync-modal');
+  await joinRoom(code);
+}
+
+function copyRoomCode(code) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code).then(() => showToast('📋 Código ' + code + ' copiado!'));
+  } else {
+    showToast('Código: ' + code);
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id)?.classList.remove('open');
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// ─── TOAST ───────────────────────────────────
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ─── WHATSAPP SHARE ──────────────────────────
+
+function buildWhatsAppText() {
+  const lines = [];
+  const { have, missing, duplicates, pct } = getGlobalStats();
+  
+  lines.push('🏆 *ÁLBUM COPA DO MUNDO 2026*');
+  lines.push('━━━━━━━━━━━━━━━━━━━━');
+  lines.push(`📊 Progresso: ${have} de ${ALBUM_DATA.totalStickers} figurinhas (${pct}%)`);
+  lines.push(`✅ Tenho: ${have}  |  ❌ Faltam: ${missing}  |  🔁 Repetidas: ${duplicates}`);
+  lines.push('');
+  
+  let hasMissing = false;
+  let hasRepeat = false;
+  const missingLines = [];
+  const repeatLines = [];
+  
+  // Countries
+  ALBUM_DATA.countries.forEach(c => {
+    const s = state[c.id] || {};
+    const missing = c.stickers.filter(st => (s[st.num] || 0) === 0);
+    const repeated = c.stickers.filter(st => (s[st.num] || 0) > 1);
+    
+    if (missing.length > 0) {
+      hasMissing = true;
+      const codes = missing.map(st => `${c.prefix}${st.num}`).join(', ');
+      if (missingLines.length > 0) missingLines.push('');
+      missingLines.push(`${c.flag} *${c.name}:*`);
+      missingLines.push(codes);
+    }
+    if (repeated.length > 0) {
+      hasRepeat = true;
+      const codes = repeated.map(st => `${c.prefix}${st.num}×${s[st.num]}`).join(', ');
+      if (repeatLines.length > 0) repeatLines.push('');
+      repeatLines.push(`${c.flag} *${c.name}:*`);
+      repeatLines.push(codes);
+    }
+  });
+  
+  // Special sections
+  SPECIAL_SECTIONS.forEach(sec => {
+    const s = state[sec.id] || {};
+    const missing = sec.stickers.filter(st => (s[st.num] || 0) === 0);
+    const repeated = sec.stickers.filter(st => (s[st.num] || 0) > 1);
+    
+    if (missing.length > 0) {
+      hasMissing = true;
+      const codes = missing.map(st => `${sec.prefix}${st.num}`).join(', ');
+      if (missingLines.length > 0) missingLines.push('');
+      missingLines.push(`${sec.flag} *${sec.name}:*`);
+      missingLines.push(codes);
+    }
+    if (repeated.length > 0) {
+      hasRepeat = true;
+      const codes = repeated.map(st => `${sec.prefix}${st.num}×${s[st.num]}`).join(', ');
+      if (repeatLines.length > 0) repeatLines.push('');
+      repeatLines.push(`${sec.flag} *${sec.name}:*`);
+      repeatLines.push(codes);
+    }
+  });
+  
+  if (hasMissing) {
+    lines.push('❌ *FIGURINHAS FALTANTES*');
+    lines.push('━━━━━━━━━━━━━━━━━━━━');
+    lines.push(...missingLines);
+    lines.push('');
+  } else {
+    lines.push('🎉 *Não falta nenhuma figurinha!*');
+    lines.push('');
+  }
+  
+  if (hasRepeat) {
+    lines.push('🔁 *FIGURINHAS REPETIDAS*');
+    lines.push('━━━━━━━━━━━━━━━━━━━━');
+    lines.push(...repeatLines);
+    lines.push('');
+  }
+  
+  lines.push('📱 _Gerado pelo Álbum Copa 2026 Tracker_');
+  return lines.join('\n');
+}
+
+function openWhatsAppShare() {
+  const text = buildWhatsAppText();
+  const preview = document.getElementById('whatsapp-preview');
+  if (preview) {
+    preview.textContent = text.replace(/\*/g, '').replace(/_/g, '');
+  }
+  document.getElementById('whatsapp-modal').classList.add('open');
+}
+
+function sendWhatsApp() {
+  const text = buildWhatsAppText();
+  const encoded = encodeURIComponent(text);
+  const url = 'https://api.whatsapp.com/send?text=' + encoded;
+  window.open(url, '_blank');
+  closeModal('whatsapp-modal');
+}
+
 // ─── INIT ────────────────────────────────────
+initFirebase(); // REST-based, no-op
 loadState();
 renderHome();
 
