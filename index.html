@@ -9,19 +9,71 @@
   <meta name="description" content="Tracker oficial do álbum de figurinhas Panini FIFA World Cup 2026 — 48 seleções, 980 figurinhas" />
   <title>Álbum Copa 2026</title>
 
-  <!-- PWA Manifest externo — lido pelo PWABuilder e navegadores -->
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icon-512.png" />
+  <!-- PWA Manifest inline via JS blob (funciona em arquivo único) -->
+  <link rel="manifest" id="pwa-manifest" />
+
+  <!-- App icons (SVG inline para PWA) -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%230a0f1e'/><text y='360' x='256' text-anchor='middle' font-size='300'>🏆</text></svg>" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
   <script>
+  // ── Inject PWA manifest as blob URL (works with single HTML file) ──
+  (function() {
+    const iconSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%230a0f1e'/><text y='360' x='256' text-anchor='middle' font-size='300'>🏆</text></svg>`;
+    const manifest = {
+      name: "Álbum Copa 2026",
+      short_name: "Copa 2026",
+      description: "Tracker do álbum Panini FIFA World Cup 2026 — 48 seleções, 980 figurinhas",
+      start_url: "./",
+      scope: "./",
+      display: "standalone",
+      orientation: "portrait",
+      background_color: "#0a0f1e",
+      theme_color: "#0a0f1e",
+      lang: "pt-BR",
+      categories: ["sports", "utilities"],
+      icons: [
+        { src: "data:image/svg+xml," + iconSvg, sizes: "any", type: "image/svg+xml", purpose: "any maskable" },
+        { src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAADsQAAA7EB9YPtSQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZxivDFoAAAHSSURBVHic7dAxAQAAAMKg9U9tDB+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeANQABAAEAAAAAAAEAAAABAAAA", sizes: "192x192", type: "image/png" }
+      ],
+      screenshots: [],
+      shortcuts: []
+    };
+    const blob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
+    document.getElementById('pwa-manifest').href = URL.createObjectURL(blob);
+  })();
+
+  // ── Register Service Worker inline ──
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {});
-    });
+    const swCode = `
+const CACHE = 'album-copa-2026-v1';
+const FONTS = [
+  'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap'
+];
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(FONTS).catch(() => {}))
+  );
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+  ));
+  self.clients.claim();
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => new Response('', {status: 408})))
+  );
+});
+`;
+    const swBlob = new Blob([swCode], {type: 'application/javascript'});
+    const swUrl = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl, {scope: './'}).catch(() => {});
   }
   </script>
   <style>
@@ -1904,10 +1956,9 @@ let currentSpecial = null;
 // Usa Firebase Realtime Database via REST puro — funciona em qualquer host
 // Projeto público com regras abertas: { ".read": true, ".write": true }
 // ── Sync Backend: JSONBin.io (grátis, sem config extra)
-// Crie conta em jsonbin.io → Copie sua Master Key → Cole em JBIN_MASTER_KEY
-// OU deixe vazio para usar apenas modo local
-const JBIN_MASTER_KEY = localStorage.getItem('jbin_key') || '';
+// Lê a key sempre ao vivo do localStorage (não pode ser const)
 const JBIN_API = 'https://api.jsonbin.io/v3';
+function JBIN_MASTER_KEY() { return localStorage.getItem('jbin_key') || ''; }
 
 let syncRoom = null;
 let syncPollInterval = null;
@@ -1934,7 +1985,7 @@ async function pushStateToRoom() {
   lastPushHash = payload;
   setSyncStatus('syncing', 'Salvando...');
   const binId = localStorage.getItem('jbin_' + syncRoom);
-  const key = JBIN_MASTER_KEY;
+  const key = JBIN_MASTER_KEY();
   if (!key) { setSyncStatus('error', 'Configure a API key'); return; }
   try {
     let r;
@@ -1966,7 +2017,7 @@ async function pullFromRoom() {
   if (!syncRoom) return;
   const binId = localStorage.getItem('jbin_' + syncRoom);
   if (!binId) return;
-  const key = JBIN_MASTER_KEY;
+  const key = JBIN_MASTER_KEY();
   try {
     const r = await fetch(`${JBIN_API}/b/${binId}/latest`, {
       headers: key ? {'X-Master-Key':key} : {}
@@ -2011,7 +2062,7 @@ function stopPolling() {
 }
 
 async function joinRoom(code) {
-  const key = JBIN_MASTER_KEY;
+  const key = JBIN_MASTER_KEY();
   if (!key) {
     showToast('⚠️ Configure a API key primeiro');
     openApiKeyModal();
@@ -2653,7 +2704,7 @@ function saveApiKey() {
 
 function openSyncModal() {
   const content = document.getElementById('sync-modal-content');
-  const hasKey = !!JBIN_MASTER_KEY || !!localStorage.getItem('jbin_key');
+  const hasKey = !!JBIN_MASTER_KEY();
   
   if (!hasKey) {
     openApiKeyModal();
