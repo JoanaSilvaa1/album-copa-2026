@@ -1,10 +1,10 @@
 const CACHE_NAME = 'album-copa-2026-v3';
 const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
+  '/',
+  '/',
+  '/manifest.webmanifest',
+  '/icon-192.png',
+  '/icon-512.png',
   'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap'
 ];
 
@@ -35,7 +35,7 @@ self.addEventListener('fetch', e => {
           caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
           return res;
         })
-        .catch(() => caches.match('./index.html'))
+        .catch(() => caches.match('/'))
       )
   );
 });
