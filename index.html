@@ -386,28 +386,12 @@ body {
 }
 .btn-scan:active { background: rgba(59,130,246,.22); }
 
-.scan-viewport {
-  position: relative; width: 100%; border-radius: var(--r); overflow: hidden;
-  background: #000; aspect-ratio: 4/3; max-height: 280px;
+.scan-start-btn {
+  background: var(--gold); color: #000; font-family: 'Outfit',sans-serif;
+  font-size: 1rem; font-weight: 700; border: none; padding: 12px 32px;
+  border-radius: 99px; cursor: pointer; display: inline-block;
 }
-#scan-video { width: 100%; height: 100%; object-fit: cover; display: block; }
-.scan-overlay {
-  position: absolute; inset: 0; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 12px;
-}
-.scan-frame {
-  width: 180px; height: 70px;
-  border: 2px solid var(--gold); border-radius: 8px;
-  box-shadow: 0 0 0 9999px rgba(0,0,0,.45);
-  animation: scan-pulse 1.5s ease-in-out infinite;
-  position: relative; top: -20px;
-}
-@keyframes scan-pulse { 0%,100%{border-color:var(--gold);box-shadow:0 0 0 9999px rgba(0,0,0,.45)} 50%{border-color:#fff;box-shadow:0 0 0 9999px rgba(0,0,0,.55)} }
-.scan-hint {
-  font-size: .68rem; color: rgba(255,255,255,.8); text-align: center;
-  background: rgba(0,0,0,.5); padding: 4px 10px; border-radius: 99px;
-  position: relative; top: -8px;
-}
+.scan-start-btn:active { transform: scale(.96); }
 .scan-result {
   margin-top: 12px; padding: 14px; border-radius: var(--r);
   background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3);
@@ -561,18 +545,33 @@ body {
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">📷 Scanner de Figurinha</div>
-    <p class="modal-sub">Aponte para o código no canto da figurinha (ex: PAN 9)</p>
-    <div id="scan-area">
-      <div class="scan-viewport">
-        <video id="scan-video" autoplay playsinline muted></video>
-        <canvas id="scan-canvas" style="display:none"></canvas>
-        <div class="scan-overlay">
-          <div class="scan-frame"></div>
-          <p class="scan-hint">Enquadre o código no canto superior direito</p>
-        </div>
+    <p class="modal-sub">Aponte para o código no canto superior direito da figurinha (ex: PAN 9)</p>
+
+    <!-- Input oculto que abre a câmera nativa -->
+    <input type="file" id="scan-input" accept="image/*" capture="environment"
+           style="display:none" onchange="handleScanImage(this)" />
+    <canvas id="scan-canvas" style="display:none"></canvas>
+
+    <div id="scan-idle">
+      <div style="text-align:center;padding:20px 0 16px">
+        <div style="font-size:3.5rem;margin-bottom:12px">📷</div>
+        <p style="font-size:.85rem;color:var(--text2);margin-bottom:20px;line-height:1.6">
+          Tire uma foto da parte de trás da figurinha.<br>
+          <span style="color:var(--text3);font-size:.75rem">O código fica no canto superior direito</span>
+        </p>
+        <button class="scan-start-btn" onclick="document.getElementById('scan-input').click()">
+          📸 Abrir câmera
+        </button>
       </div>
-      <div id="scan-result" class="scan-result" style="display:none"></div>
     </div>
+
+    <div id="scan-processing" style="display:none;text-align:center;padding:20px 0">
+      <div style="font-size:2.5rem;margin-bottom:10px">⏳</div>
+      <p style="font-size:.85rem;color:var(--text2)">Lendo código da figurinha...</p>
+    </div>
+
+    <div id="scan-result" class="scan-result" style="display:none"></div>
+
     <button class="modal-btn-cancel" onclick="closeScanner()" style="margin-top:12px">Fechar</button>
   </div>
 </div>
@@ -604,7 +603,7 @@ body {
 // Preload state from parsed list
 (function(){
   var STORAGE_KEY = "album_copa_2026_v3";
-  var preloaded = {"fwc":{"0":2,"1":1,"2":1,"3":1,"4":1,"5":0,"6":1,"7":2,"8":1,"9":1,"10":1,"11":1,"12":1,"13":1,"14":1,"15":1,"16":1,"17":1,"18":0,"19":1},"mex":{"1":1,"2":1,"3":1,"4":1,"5":1,"6":1,"7":2,"8":2,"9":1,"10":1,"11":1,"12":1,"13":1,"14":1,"15":1,"16":1,"17":2,"18":1,"19":1,"20":1},"rsa":{"1":1,"2":3,"3":1,"4":2,"5":1,"6":2,"7":1,"8":1,"9":1,"10":2,"11":1,"12":1,"13":3,"14":1,"15":1,"16":0,"17":1,"18":0,"19":3,"20":1},"kor":{"1":1,"2":0,"3":1,"4":1,"5":1,"6":1,"7":1,"8":1,"9":1,"10":1,"11":1,"12":0,"13":2,"14":1,"15":1,"16":0,"17":0,"18":0,"19":1,"20":1},"cze":{"1":0,"2":2,"3":0,"4":2,"5":1,"6":0,"7":1,"8":2,"9":1,"10":2,"11":1,"12":1,"13":1,"14":1,"15":1,"16":1,"17":1,"18":0,"19":1,"20":1},"can":{"1":1,"2":1,"3":0,"4":1,"5":1,"6":1,"7":1,"8":1,"9":2,"10":1,"11":1,"12":1,"13":0,"14":2,"15":1,"16":1,"17":1,"18":1,"19":1,"20":0},"bih":{"1":0,"2":2,"3":1,"4":0,"5":1,"6":2,"7":2,"8":1,"9":1,"10":1,"11":2,"12":1,"13":2,"14":2,"15":1,"16":2,"17":2,"18":0,"19":0,"20":0},"qat":{"1":1,"2":2,"3":1,"4":0,"5":1,"6":2,"7":1,"8":1,"9":1,"10":1,"11":1,"12":1,"13":2,"14":1,"15":1,"16":1,"17":1,"18":1,"19":1,"20":1},"sui":{"1":1,"2":1,"3":1,"4":0,"5":1,"6":2,"7":2,"8":1,"9":1,"10":1,"11":1,"12":1,"13":1,"14":1,"15":1,"16":1,"17":1,"18":1,"19":2,"20":1},"bra":{"1":1,"2":1,"3":1,"4":0,"5":0,"6":1,"7":1,"8":1,"9":1,"10":0,"11":1,"12":0,"13":0,"14":0,"15":1,"16":1,"17":1,"18":1,"19":1,"20":1},"mar":{"1":1,"2":2,"3":1,"4":1,"5":1,"6":2,"7":1,"8":1,"9":0,"10":3,"11":1,"12":0,"13":1,"14":1,"15":2,"16":1,"17":1,"18":1,"19":1,"20":1},"hai":{"1":1,"2":1,"3":1,"4":1,"5":1,"6":2,"7":1,"8":1,"9":1,"10":2,"11":1,"12":0,"13":0,"14":1,"15":0,"16":1,"17":0,"18":0,"19":0,"20":1},"sco":{"1":1,"2":2,"3":4,"4":1,"5":1,"6":1,"7":2,"8":0,"9":0,"10":1,"11":2,"12":1,"13":1,"14":0,"15":1,"16":1,"17":2,"18":1,"19":1,"20":2},"usa":{"1":1,"2":0,"3":0,"4":1,"5":1,"6":1,"7":1,"8":1,"9":1,"10":0,"11":1,"12":1,"13":1,"14":1,"15":2,"16":1,"17":2,"18":1,"19":2,"20":1},"par":{"1":1,"2":0,"3":1,"4":1,"5":0,"6":2,"7":1,"8":3,"9":1,"10":1,"11":0,"12":1,"13":1,"14":1,"15":1,"16":1,"17":0,"18":1,"19":1,"20":1},"aus":{"1":1,"2":0,"3":1,"4":2,"5":2,"6":2,"7":1,"8":0,"9":1,"10":0,"11":0,"12":0,"13":1,"14":0,"15":1,"16":1,"17":0,"18":0,"19":1,"20":1},"tur":{"1":1,"2":0,"3":1,"4":1,"5":1,"6":1,"7":1,"8":1,"9":1,"10":2,"11":1,"12":1,"13":1,"14":2,"15":1,"16":1,"17":1,"18":4,"19":1,"20":0},"ger":{"1":2,"2":1,"3":1,"4":1,"5":1,"6":1,"7":1,"8":2,"9":2,"10":1,"11":0,"12":0,"13":1,"14":1,"15":0,"16":2,"17":0,"18":1,"19":1,"20":0},"cuw":{"1":0,"2":0,"3":1,"4":2,"5":1,"6":1,"7":1,"8":1,"9":1,"10":1,"11":1,"12":1,"13":0,"14":0,"15":1,"16":1,"17":0,"18":1,"19":1,"20":2},"civ":{"1":0,"2":1,"3":1,"4":0,"5":1,"6":1,"7":1,"8":1,"9":2,"10":0,"11":1,"12":1,"13":1,"14":0,"15":1,"16":2,"17":2,"18":1,"19":1,"20":1},"ecu":{"1":1,"2":1,"3":0,"4":0,"5":1,"6":1,"7":1,"8":1,"9":0,"10":1,"11":1,"12":1,"13":1,"14":1,"15":1,"16":1,"17":0,"18":1,"19":1,"20":1},"ned":{"1":0,"2":1,"3":1,"4":1,"5":1,"6":1,"7":1,"8":2,"9":1,"10":1,"11":2,"12":1,"13":0,"14":1,"15":1,"16":1,"17":0,"18":1,"19":0,"20":1},"jpn":{"1":2,"2":2,"3":1,"4":0,"5":0,"6":1,"7":1,"8":0,"9":1,"10":1,"11":1,"12":1,"13":2,"14":2,"15":1,"16":1,"17":0,"18":2,"19":1,"20":1},"swe":{"1":1,"2":1,"3":1,"4":1,"5":1,"6":1,"7":2,"8":2,"9":1,"10":1,"11":1,"12":2,"13":1,"14":1,"15":0,"16":1,"17":1,"18":1,"19":0,"20":1},"tun":{"1":0,"2":1,"3":0,"4":2,"5":0,"6":0,"7":2,"8":1,"9":1,"10":2,"11":1,"12":1,"13":1,"14":1,"15":2,"16":1,"17":1,"18":2,"19":3,"20":0},"bel":{"1":0,"2":1,"3":0,"4":0,"5":1,"6":2,"7":1,"8":1,"9":1,"10":1,"11":1,"12":2,"13":1,"14":1,"15":1,"16":1,"17":1,"18":1,"19":1,"20":1},"egy":{"1":1,"2":1,"3":1,"4":1,"5":0,"6":2,"7":2,"8":2,"9":0,"10":0,"11":1,"12":1,"13":1,"14":1,"15":2,"16":1,"17":2,"18":0,"19":1,"20":1},"irn":{"1":1,"2":0,"3":2,"4":2,"5":0,"6":0,"7":1,"8":2,"9":1,"10":0,"11":1,"12":2,"13":1,"14":1,"15":0,"16":1,"17":1,"18":1,"19":0,"20":0},"nzl":{"1":1,"2":1,"3":0,"4":2,"5":1,"6":1,"7":1,"8":1,"9":1,"10":1,"11":1,"12":2,"13":2,"14":1,"15":1,"16":1,"17":1,"18":0,"19":1,"20":0},"esp":{"1":1,"2":1,"3":0,"4":0,"5":1,"6":0,"7":1,"8":1,"9":1,"10":1,"11":1,"12":1,"13":1,"14":0,"15":1,"16":1,"17":1,"18":0,"19":1,"20":2},"cpv":{"1":1,"2":1,"3":2,"4":2,"5":1,"6":1,"7":1,"8":2,"9":0,"10":0,"11":1,"12":1,"13":0,"14":1,"15":1,"16":2,"17":1,"18":1,"19":0,"20":1},"ksa":{"1":0,"2":1,"3":1,"4":1,"5":1,"6":0,"7":0,"8":1,"9":0,"10":1,"11":0,"12":1,"13":1,"14":1,"15":1,"16":0,"17":1,"18":1,"19":0,"20":1},"uru":{"1":1,"2":1,"3":2,"4":1,"5":1,"6":0,"7":0,"8":1,"9":1,"10":1,"11":1,"12":1,"13":1,"14":1,"15":1,"16":1,"17":1,"18":1,"19":1,"20":1},"fra":{"1":1,"2":2,"3":2,"4":1,"5":1,"6":2,"7":1,"8":0,"9":1,"10":2,"11":1,"12":1,"13":0,"14":1,"15":0,"16":1,"17":1,"18":1,"19":1,"20":1},"sen":{"1":0,"2":1,"3":1,"4":1,"5":1,"6":1,"7":1,"8":1,"9":1,"10":1,"11":1,"12":2,"13":2,"14":2,"15":1,"16":1,"17":1,"18":0,"19":1,"20":1},"irq":{"1":1,"2":2,"3":1,"4":1,"5":3,"6":1,"7":1,"8":0,"9":1,"10":1,"11":2,"12":0,"13":0,"14":1,"15":0,"16":2,"17":2,"18":1,"19":1,"20":2},"nor":{"1":1,"2":1,"3":1,"4":1,"5":1,"6":1,"7":0,"8":1,"9":2,"10":1,"11":1,"12":1,"13":2,"14":2,"15":1,"16":0,"17":0,"18":1,"19":3,"20":0},"arg":{"1":1,"2":1,"3":0,"4":1,"5":0,"6":1,"7":1,"8":1,"9":1,"10":1,"11":1,"12":1,"13":2,"14":1,"15":0,"16":1,"17":1,"18":0,"19":0,"20":1},"alg":{"1":1,"2":1,"3":1,"4":1,"5":1,"6":1,"7":1,"8":1,"9":1,"10":1,"11":1,"12":1,"13":1,"14":1,"15":0,"16":2,"17":1,"18":1,"19":1,"20":1},"aut":{"1":0,"2":0,"3":1,"4":1,"5":1,"6":1,"7":1,"8":4,"9":1,"10":1,"11":2,"12":2,"13":2,"14":1,"15":1,"16":2,"17":1,"18":1,"19":1,"20":1},"jor":{"1":1,"2":2,"3":1,"4":1,"5":0,"6":1,"7":1,"8":2,"9":1,"10":0,"11":1,"12":1,"13":1,"14":0,"15":1,"16":2,"17":1,"18":1,"19":0,"20":1},"por":{"1":0,"2":0,"3":1,"4":2,"5":0,"6":0,"7":0,"8":0,"9":1,"10":0,"11":0,"12":3,"13":2,"14":1,"15":1,"16":0,"17":2,"18":1,"19":0,"20":1},"cod":{"1":1,"2":2,"3":0,"4":2,"5":1,"6":1,"7":1,"8":1,"9":1,"10":2,"11":1,"12":1,"13":1,"14":0,"15":2,"16":1,"17":1,"18":1,"19":2,"20":3},"uzb":{"1":1,"2":2,"3":1,"4":1,"5":0,"6":1,"7":0,"8":1,"9":1,"10":2,"11":1,"12":1,"13":2,"14":1,"15":0,"16":1,"17":2,"18":1,"19":0,"20":2},"col":{"1":0,"2":1,"3":0,"4":0,"5":2,"6":1,"7":1,"8":1,"9":1,"10":1,"11":1,"12":1,"13":1,"14":1,"15":0,"16":0,"17":1,"18":1,"19":2,"20":1},"eng":{"1":0,"2":1,"3":0,"4":0,"5":0,"6":1,"7":1,"8":0,"9":1,"10":1,"11":1,"12":0,"13":0,"14":0,"15":2,"16":1,"17":1,"18":1,"19":0,"20":1},"cro":{"1":1,"2":1,"3":1,"4":2,"5":0,"6":1,"7":1,"8":1,"9":0,"10":1,"11":1,"12":1,"13":1,"14":1,"15":0,"16":0,"17":0,"18":2,"19":1,"20":1},"pan":{"1":1,"2":1,"3":1,"4":1,"5":2,"6":1,"7":1,"8":1,"9":2,"10":1,"11":0,"12":1,"13":1,"14":1,"15":0,"16":1,"17":1,"18":1,"19":0,"20":1},"gha":{"1":0,"2":0,"3":0,"4":1,"5":0,"6":1,"7":1,"8":1,"9":1,"10":1,"11":2,"12":3,"13":2,"14":1,"15":1,"16":0,"17":1,"18":1,"19":0,"20":1},"coke":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0}};
+  var preloaded = {"fwc":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0},"mex":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"rsa":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"kor":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"cze":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"can":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"bih":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"qat":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"sui":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"bra":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"mar":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"hai":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"sco":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"usa":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"par":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"aus":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"tur":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"ger":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"cuw":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"civ":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"ecu":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"ned":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"jpn":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"swe":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"tun":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"bel":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"egy":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"irn":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"nzl":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"esp":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"cpv":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"ksa":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"uru":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"fra":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"sen":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"irq":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"nor":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"arg":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"alg":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"aut":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"jor":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"por":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"cod":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"uzb":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"col":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"eng":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"cro":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"pan":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"gha":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0},"coke":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0}};
   localStorage.setItem(STORAGE_KEY, JSON.stringify(preloaded));
 })();
 </script>
@@ -1770,7 +1769,6 @@ function initEvents() {
 
 // ─── SCANNER ─────────────────────────────────────────────────
 
-// Mapa de lookup: prefixo → { sid, name, flag, stickers }
 const STICKER_LOOKUP = {};
 ALBUM_DATA.countries.forEach(c => {
   STICKER_LOOKUP[c.prefix.toUpperCase()] = { sid: c.id, name: c.name, flag: c.flag, stickers: c.stickers };
@@ -1778,13 +1776,10 @@ ALBUM_DATA.countries.forEach(c => {
 SPECIAL_SECTIONS.forEach(s => {
   STICKER_LOOKUP[s.prefix.toUpperCase()] = { sid: s.id, name: s.name, flag: s.flag, stickers: s.stickers };
 });
-
-// Prefixos ordenados do maior para o menor (evita match parcial)
 const ALL_PREFIXES = Object.keys(STICKER_LOOKUP).sort((a, b) => b.length - a.length);
 
 function parseCode(rawText) {
-  // Normaliza: maiúsculas, remove tudo exceto letras/números/espaço
-  const text = rawText.toUpperCase().replace(/[^A-Z0-9]/g, ' ').replace(/\s+/, ' ').trim();
+  const text = rawText.toUpperCase().replace(/[^A-Z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
   for (const prefix of ALL_PREFIXES) {
     const re = new RegExp(prefix + '\\s*(\\d{1,2})\\b');
     const m = text.match(re);
@@ -1798,47 +1793,34 @@ function parseCode(rawText) {
   return null;
 }
 
-let scanStream   = null;
-let scanInterval = null;
 let tesseractWorker = null;
-let scanPaused   = false;
 
 function openScanner() {
-  el('scan-result').style.display = 'none';
+  el('scan-idle').style.display       = 'block';
+  el('scan-processing').style.display = 'none';
+  el('scan-result').style.display     = 'none';
+  // Reset file input so same photo can be retried
+  el('scan-input').value = '';
   el('modal-scan').classList.add('open');
-  scanPaused = false;
-  startCamera();
+  // Pre-load Tesseract in background
+  loadTesseract();
 }
 
-async function startCamera() {
-  try {
-    scanStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
-    });
-    const video = el('scan-video');
-    video.srcObject = scanStream;
-    await video.play();
-    // Load Tesseract in background while camera warms up
-    loadTesseract();
-    setTimeout(startScanLoop, 1500);
-  } catch(e) {
-    const r = el('scan-result');
-    r.style.display = 'block';
-    r.className = 'scan-result error';
-    r.innerHTML =
-      '<div style="color:var(--red);text-align:center;padding:8px">' +
-      '❌ Câmera não disponível.<br>' +
-      '<small style="color:var(--text3)">Permita o acesso à câmera<br>nas configurações do navegador</small>' +
-      '</div>';
-  }
+function closeScanner() {
+  el('modal-scan').classList.remove('open');
+  el('scan-input').value = '';
 }
 
 function loadTesseract() {
-  if (window.Tesseract || tesseractWorker) return;
-  const s = document.createElement('script');
-  s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-  s.onload = () => createTesseractWorker();
-  document.head.appendChild(s);
+  return new Promise(resolve => {
+    if (tesseractWorker) { resolve(); return; }
+    if (window.Tesseract) { createTesseractWorker().then(resolve); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.onload  = () => createTesseractWorker().then(resolve);
+    s.onerror = () => resolve();
+    document.head.appendChild(s);
+  });
 }
 
 async function createTesseractWorker() {
@@ -1846,7 +1828,7 @@ async function createTesseractWorker() {
   try {
     tesseractWorker = await Tesseract.createWorker('eng', 1, {
       workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
-      corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core-simd-lstm.wasm.js',
+      corePath:   'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core-simd-lstm.wasm.js',
       logger: () => {}
     });
     await tesseractWorker.setParameters({
@@ -1856,54 +1838,100 @@ async function createTesseractWorker() {
   } catch(e) { tesseractWorker = null; }
 }
 
-function startScanLoop() {
-  stopScanLoop();
-  let busy = false;
-  scanInterval = setInterval(async () => {
-    if (busy || scanPaused || !tesseractWorker) return;
-    busy = true;
-    try {
-      const result = await captureAndOCR();
-      if (result) {
-        scanPaused = true;
-        stopScanLoop();
-        showScanResult(result);
-      }
-    } catch(e) {}
-    busy = false;
-  }, 900);
+async function handleScanImage(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  el('scan-idle').style.display       = 'none';
+  el('scan-processing').style.display = 'block';
+  el('scan-result').style.display     = 'none';
+
+  try {
+    // Make sure Tesseract is ready
+    if (!tesseractWorker) await loadTesseract();
+
+    if (!tesseractWorker) {
+      showScanError('❌ Leitor de texto não carregou.<br><small>Verifique sua conexão e tente novamente.</small>');
+      return;
+    }
+
+    // Load image into canvas
+    const img = await loadImage(file);
+    const canvas = el('scan-canvas');
+
+    // Crop top-right corner (where the code is: e.g. PAN 9)
+    const srcX = Math.floor(img.width * 0.52);
+    const srcY = 0;
+    const srcW = Math.floor(img.width * 0.46);
+    const srcH = Math.floor(img.height * 0.20);
+    const scale = 4;
+
+    canvas.width  = srcW * scale;
+    canvas.height = srcH * scale;
+    const ctx = canvas.getContext('2d');
+    ctx.filter = 'contrast(3) brightness(1.3) grayscale(1)';
+    ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, canvas.width, canvas.height);
+
+    // Try OCR on cropped area first
+    let result = null;
+    const { data: { text: text1 } } = await tesseractWorker.recognize(canvas);
+    result = parseCode(text1);
+
+    // If not found, try full image at lower resolution
+    if (!result) {
+      const canvas2 = document.createElement('canvas');
+      const scale2  = Math.min(1200 / img.width, 1);
+      canvas2.width  = Math.floor(img.width  * scale2);
+      canvas2.height = Math.floor(img.height * scale2);
+      const ctx2 = canvas2.getContext('2d');
+      ctx2.filter = 'contrast(2) grayscale(1)';
+      ctx2.drawImage(img, 0, 0, canvas2.width, canvas2.height);
+      const { data: { text: text2 } } = await tesseractWorker.recognize(canvas2);
+      result = parseCode(text2);
+    }
+
+    if (result) {
+      showScanResult(result);
+    } else {
+      showScanError(
+        '🔍 Código não encontrado.<br>' +
+        '<small style="color:var(--text3)">Tente aproximar mais a câmera do código<br>no canto superior direito da figurinha</small>'
+      );
+    }
+  } catch(e) {
+    showScanError('❌ Erro ao processar imagem.<br><small>' + (e.message || '') + '</small>');
+  }
 }
 
-function stopScanLoop() {
-  if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
+function loadImage(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload  = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Falha ao carregar imagem')); };
+    img.src = url;
+  });
 }
 
-async function captureAndOCR() {
-  const video  = el('scan-video');
-  const canvas = el('scan-canvas');
-  if (!video.videoWidth || !tesseractWorker) return null;
+function showScanError(msg) {
+  el('scan-processing').style.display = 'none';
+  const r = el('scan-result');
+  r.style.display = 'block';
+  r.className = 'scan-result error';
+  r.innerHTML =
+    '<div style="text-align:center;padding:8px 0 12px">' + msg + '</div>' +
+    '<button class="scan-start-btn" style="width:100%;border-radius:var(--rs)" onclick="retryScan()">📸 Tentar novamente</button>';
+}
 
-  const vw = video.videoWidth;
-  const vh = video.videoHeight;
-  // Recorta apenas o canto superior direito (onde fica o código ex: PAN 9)
-  const cropX = Math.floor(vw * 0.55);
-  const cropY = 0;
-  const cropW = Math.floor(vw * 0.42);
-  const cropH = Math.floor(vh * 0.18);
-  const scale = 4; // amplia para melhorar OCR
-
-  canvas.width  = cropW * scale;
-  canvas.height = cropH * scale;
-  const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-  ctx.filter = 'contrast(2.5) brightness(1.4) grayscale(1)';
-  ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
-
-  const { data: { text } } = await tesseractWorker.recognize(canvas);
-  return parseCode(text);
+function retryScan() {
+  el('scan-result').style.display     = 'none';
+  el('scan-idle').style.display       = 'block';
+  el('scan-processing').style.display = 'none';
+  el('scan-input').value = '';
 }
 
 function showScanResult(result) {
+  el('scan-processing').style.display = 'none';
   const parts     = result.sticker.label.split(' · ');
   const stickerName = parts[1] || result.sticker.label;
   const current   = (state[result.sid] || {})[String(result.num)] || 0;
@@ -1918,9 +1946,9 @@ function showScanResult(result) {
   r.innerHTML =
     '<span class="scan-result-code">' + result.flag + ' ' + result.prefix + result.num + '</span>' +
     '<span class="scan-result-name">' + stickerName + '</span>' +
-    '<span style="font-size:.72rem;color:var(--text3);display:block;margin-bottom:12px">' + statusMsg + '</span>' +
+    '<span style="font-size:.72rem;color:var(--text3);display:block;margin-bottom:14px">' + statusMsg + '</span>' +
     '<button class="scan-add-btn" onclick="confirmScanned(\'' + result.sid + '\',' + result.num + ',\'' + result.prefix + result.num + '\')">✅ Adicionar ao álbum</button>' +
-    '<button style="width:100%;background:none;border:none;color:var(--text3);font-family:\'Outfit\',sans-serif;font-size:.78rem;padding:8px;cursor:pointer;margin-top:4px" onclick="resumeScan()">🔄 Escanear outra figurinha</button>';
+    '<button style="width:100%;background:none;border:none;color:var(--text3);font-family:\'Outfit\',sans-serif;font-size:.78rem;padding:8px;cursor:pointer;margin-top:4px" onclick="retryScan()">📸 Escanear outra figurinha</button>';
 }
 
 function confirmScanned(sid, num, code) {
@@ -1933,24 +1961,8 @@ function confirmScanned(sid, num, code) {
     ? '✅ ' + code + ' adicionada!'
     : '🔁 ' + code + ' — repetida #' + (newCount - 1) + ' contabilizada!';
   showToast(msg);
-  resumeScan();
+  retryScan();
   if (!currentCountry && !currentSpecial) updateGlobalBar();
-}
-
-function resumeScan() {
-  el('scan-result').style.display = 'none';
-  scanPaused = false;
-  startScanLoop();
-}
-
-function closeScanner() {
-  stopScanLoop();
-  scanPaused = false;
-  if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
-  el('scan-video').srcObject = null;
-  el('modal-scan').classList.remove('open');
-  el('scan-result').style.display = 'none';
-  if (!currentCountry && !currentSpecial) renderHome();
 }
 
 function startApp() {
