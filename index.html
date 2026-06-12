@@ -479,87 +479,157 @@ function sendWA(){window.open('https://api.whatsapp.com/send?text='+encodeURICom
 // === SCANNER ===
 const SLU={};COUNTRIES.forEach(c=>{SLU[c.px]={id:c.id,name:c.name,flag:c.flag,st:c.st};});SPECIALS.forEach(s=>{SLU[s.px]={id:s.id,name:s.name,flag:s.flag,st:s.st};});
 const SPX=Object.keys(SLU).sort((a,b)=>b.length-a.length);
-let TW=null;
+function parseC(raw){
+  const t=raw.toUpperCase().replace(/[^A-Z0-9]/g,' ').replace(/\s+/g,' ').trim();
+  for(const p of SPX){
+    const m=t.match(new RegExp(p+'\\s*(\\d{1,2})\\b'));
+    if(m){const n=parseInt(m[1]),sec=SLU[p];const x=sec.st.find(s=>s.n===n);if(x)return{px:p,n,id:sec.id,name:sec.name,flag:sec.flag,st:x};}
+  }
+  return null;
+}
 
-// === SCANNER (live camera) ===
-const SLU={};COUNTRIES.forEach(c=>{SLU[c.px]={id:c.id,name:c.name,flag:c.flag,st:c.st};});SPECIALS.forEach(s=>{SLU[s.px]={id:s.id,name:s.name,flag:s.flag,st:s.st};});
-const SPX=Object.keys(SLU).sort((a,b)=>b.length-a.length);
-function parseC(raw){const t=raw.toUpperCase().replace(/[^A-Z0-9]/g,' ').replace(/\s+/g,' ').trim();for(const p of SPX){const m=t.match(new RegExp(p+'\\s*(\\d{1,2})\\b'));if(m){const n=parseInt(m[1]),sec=SLU[p];const x=sec.st.find(s=>s.n===n);if(x)return{px:p,n,id:sec.id,name:sec.name,flag:sec.flag,st:x};}}return null;}
-
-let TW=null,scanStream=null,scanLoop=null,scanPaused=false,scanAnim=null;
+let TW=null,scanStream=null,scanLoop=null,scanPaused=false,scanAnim=null,scanMode='';
 
 function openScan(){
   el('mod-sc').classList.add('open');
   el('sr').style.display='none';
-  el('scan-status').textContent='Câmera iniciando...';
-  el('scan-err-overlay').style.display='none';
   scanPaused=false;
   loadT();
-  initCamera();
+  // Try live camera first; silently fall back to native if unavailable
+  if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+    setScanStatus('Câmera iniciando...');
+    initLiveCamera();
+  } else {
+    // No getUserMedia — go straight to native camera
+    goNativeCamera();
+  }
 }
 
 function closeScan(){
   stopCamera();
   el('mod-sc').classList.remove('open');
   el('sr').style.display='none';
+  // Remove native input if it exists
+  const inp=document.getElementById('scan-native');
+  if(inp)inp.remove();
   scanPaused=false;
 }
 
-async function initCamera(){
+// ── LIVE CAMERA (browser / https) ────────────────────────────
+async function initLiveCamera(){
   try{
     if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}
-    scanStream=await navigator.mediaDevices.getUserMedia({
-      video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false
-    });
+    scanStream=await Promise.race([
+      navigator.mediaDevices.getUserMedia({
+        video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},
+        audio:false
+      }),
+      new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),5000))
+    ]);
+    scanMode='live';
     const v=el('scan-video');
     v.srcObject=scanStream;
-    await new Promise((res,rej)=>{v.onloadedmetadata=()=>v.play().then(res).catch(rej);setTimeout(rej,8000);});
-    el('scan-status').textContent='🔍 Aponte o código no verso da figurinha';
+    v.style.display='block';
+    await new Promise((res,rej)=>{v.onloadedmetadata=()=>v.play().then(res).catch(rej);setTimeout(rej,6000);});
     el('scan-err-overlay').style.display='none';
+    setScanStatus('🔍 Aponte o verso da figurinha para a câmera');
     startScanLine();
     startScanLoop();
   }catch(e){
-    el('scan-err-overlay').style.display='flex';
-    el('scan-status').textContent='Câmera bloqueada';
+    // getUserMedia failed — silently switch to native camera
+    stopCamera();
+    goNativeCamera();
   }
 }
 
-function stopCamera(){
-  clearInterval(scanLoop);scanLoop=null;
-  cancelAnimationFrame(scanAnim);scanAnim=null;
-  if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}
-  const v=el('scan-video');if(v){v.srcObject=null;}
+// ── NATIVE CAMERA (PWA installed / no permission) ─────────────
+function goNativeCamera(){
+  scanMode='native';
+  el('scan-video').style.display='none';
+  el('scan-err-overlay').style.display='none';
+  setScanStatus('📷 Aponte para o código no verso da figurinha');
+  // Show viewfinder placeholder
+  el('scan-frame').style.borderColor='rgba(255,255,255,.3)';
+  el('scan-line').style.display='none';
+  // Create hidden file input that opens native camera
+  let inp=document.getElementById('scan-native');
+  if(!inp){
+    inp=document.createElement('input');
+    inp.type='file';inp.id='scan-native';
+    inp.accept='image/*';inp.capture='environment';
+    inp.style.display='none';
+    inp.addEventListener('change',function(){handleNativePhoto(this);});
+    document.body.appendChild(inp);
+  }
+  inp.value='';
+  // Open native camera immediately (this IS a user gesture — openScan was called from button click)
+  inp.click();
 }
 
+async function handleNativePhoto(input){
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  setScanStatus('⏳ Lendo código da figurinha...');
+  el('scan-frame').style.borderColor='#f5c842';
+  try{
+    if(!TW)await loadT();
+    if(!TW){setScanStatus('❌ Leitor não carregou. Tente novamente.');return;}
+    const img=await new Promise((res,rej)=>{
+      const i=new Image();const u=URL.createObjectURL(file);
+      i.onload=()=>{URL.revokeObjectURL(u);res(i);};i.onerror=rej;i.src=u;
+    });
+    const cv=el('scan-cv');
+    // Try top-right crop first (where code lives)
+    const sx=Math.floor(img.width*0.50),sw=Math.floor(img.width*0.48),sh=Math.floor(img.height*0.22);
+    cv.width=sw*4;cv.height=sh*4;
+    const ctx=cv.getContext('2d');
+    ctx.filter='contrast(3) brightness(1.4) grayscale(1)';
+    ctx.drawImage(img,sx,0,sw,sh,0,0,cv.width,cv.height);
+    let res=null;
+    const{data:{text:t1}}=await TW.recognize(cv);res=parseC(t1);
+    if(!res){
+      // Full image fallback
+      const sc=Math.min(1400/img.width,1);
+      cv.width=Math.floor(img.width*sc);cv.height=Math.floor(img.height*sc);
+      ctx.filter='contrast(2.5) grayscale(1)';
+      ctx.drawImage(img,0,0,cv.width,cv.height);
+      const{data:{text:t2}}=await TW.recognize(cv);res=parseC(t2);
+    }
+    el('scan-frame').style.borderColor='#3b5bdb';
+    if(res) scanOk(res);
+    else{setScanStatus('🔍 Código não encontrado — tente aproximar mais');el('scan-frame').style.borderColor='rgba(239,68,68,.6)';setTimeout(()=>goNativeCamera(),1500);}
+  }catch(e){setScanStatus('❌ Erro ao processar.');setTimeout(()=>goNativeCamera(),1500);}
+}
+
+// ── LIVE SCAN LOOP ────────────────────────────────────────────
 function startScanLine(){
-  const line=el('scan-line');
-  const frame=el('scan-frame');
+  cancelAnimationFrame(scanAnim);
+  const line=el('scan-line'),frame=el('scan-frame');
   if(!line||!frame)return;
-  let dir=1,pos=0;
-  function animate(){
-    pos+=dir*1.5;
-    const maxH=frame.clientHeight;
-    if(pos>=maxH-2){dir=-1;pos=maxH-2;}
-    if(pos<=0){dir=1;pos=0;}
+  line.style.display='block';
+  let pos=0,dir=1;
+  function tick(){
+    if(!scanStream){return;}
+    pos+=dir*1.8;
+    const max=frame.clientHeight-2;
+    if(pos>=max){dir=-1;pos=max;}else if(pos<=0){dir=1;pos=0;}
     line.style.top=pos+'px';
-    scanAnim=requestAnimationFrame(animate);
+    scanAnim=requestAnimationFrame(tick);
   }
-  animate();
+  tick();
 }
 
 function startScanLoop(){
   clearInterval(scanLoop);
   let busy=false;
   scanLoop=setInterval(async()=>{
-    if(busy||scanPaused||!TW)return;
+    if(busy||scanPaused||!TW||scanMode!=='live')return;
     busy=true;
     try{
-      const v=el('scan-video');
-      if(!v||!v.videoWidth){busy=false;return;}
-      // Crop center 60% width, 40% height (where viewfinder is)
+      const v=el('scan-video');if(!v||!v.videoWidth){busy=false;return;}
       const vw=v.videoWidth,vh=v.videoHeight;
-      const cx=Math.floor(vw*0.20),cw=Math.floor(vw*0.60);
-      const cy=Math.floor(vh*0.30),ch=Math.floor(vh*0.40);
+      const cx=Math.floor(vw*0.18),cw=Math.floor(vw*0.64);
+      const cy=Math.floor(vh*0.28),ch=Math.floor(vh*0.44);
       const cv=el('scan-cv');
       cv.width=cw*3;cv.height=ch*3;
       const ctx=cv.getContext('2d');
@@ -573,6 +643,14 @@ function startScanLoop(){
   },900);
 }
 
+function stopCamera(){
+  clearInterval(scanLoop);scanLoop=null;
+  cancelAnimationFrame(scanAnim);scanAnim=null;
+  if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}
+  const v=el('scan-video');if(v){v.srcObject=null;v.style.display='none';}
+}
+
+// ── TESSERACT ─────────────────────────────────────────────────
 function loadT(){
   return new Promise(res=>{
     if(TW){res();return;}
@@ -595,12 +673,16 @@ async function mkTW(){
   }catch(e){TW=null;}
 }
 
+// ── RESULTS ───────────────────────────────────────────────────
+function setScanStatus(msg){const s=el('scan-status');if(s)s.textContent=msg;}
+
 function scanOk(res){
   const parts=res.st.lb.split(' · '),nm=parts[1]||res.st.lb;
   const cur=(ST[res.id]||{})[String(res.n)]||0;
   const isNew=cur===0;
-  const sec=SLU[res.px];const secName=sec?sec.name:'';
-  el('scan-status').textContent=isNew?'✨ Figurinha identificada!':'🔁 Figurinha identificada!';
+  const secName=(SLU[res.px]||{}).name||'';
+  setScanStatus(isNew?'✨ Figurinha identificada!':'🔁 Figurinha identificada!');
+  el('scan-frame').style.borderColor=isNew?'rgba(34,197,94,.8)':'rgba(245,200,66,.8)';
   const r=el('sr');r.style.display='block';
   if(isNew){
     r.innerHTML=
@@ -636,16 +718,15 @@ function confScan(id,n,code){
 
 function resumeScan(){
   el('sr').style.display='none';
-  el('scan-status').textContent='🔍 Aponte o código no verso da figurinha';
+  el('scan-frame').style.borderColor='#3b5bdb';
   scanPaused=false;
-  startScanLoop();
+  if(scanMode==='live') startScanLoop();
+  else goNativeCamera();
 }
 
-// Legacy - not used but kept to avoid reference errors
 function handleScan(){}
 function retryScan(){resumeScan();}
 
-let _tt=null;
 function toast(m){const t=el('toast');if(!t)return;t.textContent=m;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2800);}
 
 // === HELPERS ===
