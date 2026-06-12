@@ -139,12 +139,19 @@ body{background:var(--bg);color:var(--t);font-family:'Outfit',sans-serif;-webkit
 .rdot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px rgba(34,197,94,.5);flex-shrink:0}
 .rcode{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:4px;color:var(--green);margin-left:auto}
 #wa-prev{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;max-height:240px;overflow-y:auto;font-size:.7rem;line-height:1.7;color:var(--t2);margin-bottom:14px;white-space:pre-wrap;font-family:monospace}
-.scan-btn{background:var(--gold);color:#000;font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;border:none;padding:12px 32px;border-radius:99px;cursor:pointer;display:inline-block}
-.scan-res{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:var(--r);padding:16px;text-align:center;margin-bottom:8px}
-.scan-res.err{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3)}
-.scan-code{display:block;font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:6px;color:var(--gold)}
-.scan-nm{display:block;font-size:.82rem;color:var(--t2);margin:4px 0}
-.scan-st{display:block;font-size:.72rem;color:var(--t3);margin-bottom:12px}
+.scan-res-new{background:linear-gradient(135deg,rgba(34,197,94,.13),rgba(34,197,94,.05));border:2px solid rgba(34,197,94,.5);border-radius:var(--r);padding:16px 16px 12px;margin-bottom:8px}
+.scan-res-dup{background:linear-gradient(135deg,rgba(245,200,66,.13),rgba(245,200,66,.05));border:2px solid rgba(245,200,66,.5);border-radius:var(--r);padding:16px 16px 12px;margin-bottom:8px}
+.scan-res-err{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:var(--r);padding:16px;margin-bottom:8px;text-align:center}
+.scan-badge{display:inline-flex;align-items:center;gap:5px;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;padding:3px 10px;border-radius:99px;margin-bottom:10px}
+.scan-badge-new{background:rgba(34,197,94,.2);color:var(--green);border:1px solid rgba(34,197,94,.4)}
+.scan-badge-dup{background:rgba(245,200,66,.2);color:var(--gold);border:1px solid rgba(245,200,66,.4)}
+.scan-code{display:block;font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:5px;color:var(--t);margin-bottom:2px}
+.scan-nm{display:block;font-size:.88rem;font-weight:600;color:var(--t);margin-bottom:2px}
+.scan-ctry{display:block;font-size:.72rem;color:var(--t3);margin-bottom:12px}
+.scan-cpill{display:inline-block;background:rgba(245,200,66,.15);color:var(--gold);font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:99px;border:1px solid rgba(245,200,66,.3);margin-bottom:12px}
+.scan-add-new{width:100%;padding:11px;border-radius:8px;background:var(--green);color:#000;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;border:none;cursor:pointer;margin-bottom:6px}
+.scan-add-dup{width:100%;padding:11px;border-radius:8px;background:var(--gold);color:#000;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;border:none;cursor:pointer;margin-bottom:6px}
+.scan-retry{width:100%;background:none;border:none;color:var(--t3);font-family:'Outfit',sans-serif;font-size:.78rem;padding:6px;cursor:pointer}
 #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(16px);background:#1a2236;border:1px solid rgba(255,255,255,.12);color:var(--t);font-size:.78rem;font-weight:500;padding:9px 16px;border-radius:99px;white-space:nowrap;z-index:200;opacity:0;transition:all .3s;pointer-events:none}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:99px}
@@ -221,9 +228,8 @@ body{background:var(--bg);color:var(--t);font-family:'Outfit',sans-serif;-webkit
 <div class="ov" id="mod-sc"><div class="modal"><div class="mhandle"></div><div class="mtitle">📷 Scanner de Figurinha</div><p class="msub">Aponte para o código no canto superior direito (ex: PAN 9)</p>
   <input type="file" id="scan-input" accept="image/*" capture="environment" style="display:none" onchange="handleScan(this)"/>
   <canvas id="scan-cv" style="display:none"></canvas>
-  <div id="si"><div style="text-align:center;padding:20px 0 16px"><div style="font-size:3.5rem;margin-bottom:12px">📷</div><p style="font-size:.85rem;color:var(--t2);margin-bottom:20px;line-height:1.6">Tire uma foto da parte de trás da figurinha.<br><span style="color:var(--t3);font-size:.75rem">O código fica no canto superior direito</span></p><button class="scan-btn" onclick="document.getElementById('scan-input').click()">📸 Abrir câmera</button></div></div>
   <div id="sp" style="display:none;text-align:center;padding:20px 0"><div style="font-size:2.5rem;margin-bottom:10px">⏳</div><p style="font-size:.85rem;color:var(--t2)">Lendo código...</p></div>
-  <div id="sr" class="scan-res" style="display:none"></div>
+  <div id="sr" style="display:none"></div>
   <button class="mcbtn" onclick="closeMod()" style="margin-top:12px">Fechar</button>
 </div></div>
 
@@ -453,7 +459,15 @@ const SLU={};COUNTRIES.forEach(c=>{SLU[c.px]={id:c.id,name:c.name,flag:c.flag,st
 const SPX=Object.keys(SLU).sort((a,b)=>b.length-a.length);
 function parseC(raw){const t=raw.toUpperCase().replace(/[^A-Z0-9]/g,' ').replace(/\s+/g,' ').trim();for(const p of SPX){const m=t.match(new RegExp(p+'\\s*(\\d{1,2})\\b'));if(m){const n=parseInt(m[1]),sec=SLU[p];const x=sec.st.find(s=>s.n===n);if(x)return{px:p,n,id:sec.id,name:sec.name,flag:sec.flag,st:x};}}return null;}
 let TW=null;
-function openScan(){el('si').style.display='block';el('sp').style.display='none';el('sr').style.display='none';el('scan-input').value='';el('mod-sc').classList.add('open');loadT();}
+function openScan(){
+  // Open camera immediately — no intermediate screen
+  el('sp').style.display='none';el('sr').style.display='none';
+  el('scan-input').value='';
+  el('mod-sc').classList.add('open');
+  loadT(); // preload Tesseract in background
+  // Trigger camera right away (must be direct user gesture)
+  el('scan-input').click();
+}
 function loadT(){return new Promise(res=>{if(TW){res();return;}if(window.Tesseract){mkTW().then(res);return;}const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=()=>mkTW().then(res);s.onerror=()=>res();document.head.appendChild(s);});}
 async function mkTW(){if(TW||!window.Tesseract)return;try{TW=await Tesseract.createWorker('eng',1,{workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core-simd-lstm.wasm.js',logger:()=>{}});await TW.setParameters({tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ',tessedit_pageseg_mode:'7'});}catch(e){TW=null;}}
 async function handleScan(input){const file=input.files&&input.files[0];if(!file)return;el('si').style.display='none';el('sp').style.display='block';el('sr').style.display='none';
@@ -465,10 +479,46 @@ async function handleScan(input){const file=input.files&&input.files[0];if(!file
   if(!res){const c2=document.createElement('canvas');const s2=Math.min(1200/img.width,1);c2.width=Math.floor(img.width*s2);c2.height=Math.floor(img.height*s2);const cx=c2.getContext('2d');cx.filter='contrast(2) grayscale(1)';cx.drawImage(img,0,0,c2.width,c2.height);const{data:{text:t2}}=await TW.recognize(c2);res=parseC(t2);}
   if(res)scanOk(res);else scanErr('🔍 Código não encontrado.<br><small>Aproxime mais a câmera do canto superior direito</small>');
   }catch(e){scanErr('❌ Erro: '+(e.message||''));}}
-function scanErr(msg){el('sp').style.display='none';const r=el('sr');r.style.display='block';r.className='scan-res err';r.innerHTML='<div style="padding:8px 0 12px">'+msg+'</div><button class="scan-btn" style="width:100%;border-radius:8px" onclick="retryScan()">📸 Tentar novamente</button>';}
-function scanOk(res){el('sp').style.display='none';const parts=res.st.lb.split(' · '),nm=parts[1]||res.st.lb;const cur=(ST[res.id]||{})[String(res.n)]||0;const msg=cur===0?'📌 Figurinha nova!':'🔁 Já tem '+cur+(cur===1?' cópia':' cópias')+' — será repetida';const r=el('sr');r.style.display='block';r.className='scan-res';r.innerHTML='<span class="scan-code">'+res.flag+' '+res.px+res.n+'</span><span class="scan-nm">'+nm+'</span><span class="scan-st">'+msg+'</span><button class="scan-btn" style="width:100%;border-radius:8px;margin-bottom:6px" onclick="confScan(\''+res.id+'\','+res.n+',\''+res.px+res.n+'\')">✅ Adicionar ao álbum</button><button style="width:100%;background:none;border:none;color:var(--t3);font-size:.78rem;padding:8px;cursor:pointer" onclick="retryScan()">📸 Escanear outra</button>';}
+function scanErr(msg){
+  el('sp').style.display='none';
+  const r=el('sr');r.style.display='block';
+  r.innerHTML='<div class="scan-res-err">'+msg+'<br><button class="scan-retry" onclick="retryScan()">📸 Tentar novamente</button></div>';
+}
+function scanOk(res){
+  el('sp').style.display='none';
+  const parts=res.st.lb.split(' · '), nm=parts[1]||res.st.lb;
+  const cur=(ST[res.id]||{})[String(res.n)]||0;
+  const isNew=cur===0;
+  const r=el('sr'); r.style.display='block';
+
+  // Find country/section name for subtitle
+  const sec=SLU[res.px]; const secName=sec?sec.name:'';
+
+  if(isNew){
+    r.innerHTML=
+      '<div class="scan-res-new">'
+      +'<div class="scan-badge scan-badge-new">✨ Figurinha nova</div>'
+      +'<span class="scan-code">'+res.flag+' '+res.px+res.n+'</span>'
+      +'<span class="scan-nm">'+nm+'</span>'
+      +'<span class="scan-ctry">'+secName+'</span>'
+      +'<button class="scan-add-new" onclick="confScan(\''+res.id+'\','+res.n+',\''+res.px+res.n+'\')">✅ Adicionar ao álbum</button>'
+      +'<button class="scan-retry" onclick="retryScan()">📸 Escanear outra</button>'
+      +'</div>';
+  } else {
+    r.innerHTML=
+      '<div class="scan-res-dup">'
+      +'<div class="scan-badge scan-badge-dup">🔁 Figurinha repetida</div>'
+      +'<span class="scan-code">'+res.flag+' '+res.px+res.n+'</span>'
+      +'<span class="scan-nm">'+nm+'</span>'
+      +'<span class="scan-ctry">'+secName+'</span>'
+      +'<div class="scan-cpill">Você já tem '+cur+(cur===1?' cópia':' cópias')+' desta</div>'
+      +'<button class="scan-add-dup" onclick="confScan(\''+res.id+'\','+res.n+',\''+res.px+res.n+'\')">➕ Adicionar como repetida</button>'
+      +'<button class="scan-retry" onclick="retryScan()">📸 Escanear outra</button>'
+      +'</div>';
+  }
+}
 function confScan(id,n,code){if(!ST[id])ST[id]={};const c=(ST[id][n]||0)+1;ST[id][n]=c;save();toast(c===1?'✅ '+code+' adicionada!':'🔁 '+code+' — repetida #'+(c-1)+' contabilizada!');retryScan();if(!CC&&!CS)renderHome();}
-function retryScan(){el('sr').style.display='none';el('si').style.display='block';el('sp').style.display='none';el('scan-input').value='';}
+function retryScan(){el('sr').style.display='none';el('sp').style.display='none';el('scan-input').value='';el('scan-input').click();}
 
 // === TOAST ===
 let _tt=null;
