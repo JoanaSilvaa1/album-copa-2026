@@ -139,19 +139,19 @@ body{background:var(--bg);color:var(--t);font-family:'Outfit',sans-serif;-webkit
 .rdot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px rgba(34,197,94,.5);flex-shrink:0}
 .rcode{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:4px;color:var(--green);margin-left:auto}
 #wa-prev{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;max-height:240px;overflow-y:auto;font-size:.7rem;line-height:1.7;color:var(--t2);margin-bottom:14px;white-space:pre-wrap;font-family:monospace}
-.scan-res-new{background:linear-gradient(135deg,rgba(34,197,94,.13),rgba(34,197,94,.05));border:2px solid rgba(34,197,94,.5);border-radius:var(--r);padding:16px 16px 12px;margin-bottom:8px}
-.scan-res-dup{background:linear-gradient(135deg,rgba(245,200,66,.13),rgba(245,200,66,.05));border:2px solid rgba(245,200,66,.5);border-radius:var(--r);padding:16px 16px 12px;margin-bottom:8px}
-.scan-res-err{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:var(--r);padding:16px;margin-bottom:8px;text-align:center}
-.scan-badge{display:inline-flex;align-items:center;gap:5px;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;padding:3px 10px;border-radius:99px;margin-bottom:10px}
+.scan-res-new{background:rgba(34,197,94,.1);border:2px solid rgba(34,197,94,.5);border-radius:10px;padding:12px 14px 10px;margin-bottom:8px}
+.scan-res-dup{background:rgba(245,200,66,.1);border:2px solid rgba(245,200,66,.5);border-radius:10px;padding:12px 14px 10px;margin-bottom:8px}
+.scan-badge{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;padding:3px 9px;border-radius:99px;margin-bottom:8px}
 .scan-badge-new{background:rgba(34,197,94,.2);color:var(--green);border:1px solid rgba(34,197,94,.4)}
 .scan-badge-dup{background:rgba(245,200,66,.2);color:var(--gold);border:1px solid rgba(245,200,66,.4)}
-.scan-code{display:block;font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:5px;color:var(--t);margin-bottom:2px}
-.scan-nm{display:block;font-size:.88rem;font-weight:600;color:var(--t);margin-bottom:2px}
-.scan-ctry{display:block;font-size:.72rem;color:var(--t3);margin-bottom:12px}
-.scan-cpill{display:inline-block;background:rgba(245,200,66,.15);color:var(--gold);font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:99px;border:1px solid rgba(245,200,66,.3);margin-bottom:12px}
-.scan-add-new{width:100%;padding:11px;border-radius:8px;background:var(--green);color:#000;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;border:none;cursor:pointer;margin-bottom:6px}
-.scan-add-dup{width:100%;padding:11px;border-radius:8px;background:var(--gold);color:#000;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;border:none;cursor:pointer;margin-bottom:6px}
-.scan-retry{width:100%;background:none;border:none;color:var(--t3);font-family:'Outfit',sans-serif;font-size:.78rem;padding:6px;cursor:pointer}
+.scan-code{display:block;font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:4px;color:var(--t);line-height:1}
+.scan-nm{display:block;font-size:.85rem;font-weight:600;color:var(--t);margin-top:2px}
+.scan-ctry{display:block;font-size:.72rem;color:var(--t3);margin-bottom:8px}
+.scan-cpill{display:inline-block;background:rgba(245,200,66,.15);color:var(--gold);font-size:.7rem;font-weight:700;padding:2px 9px;border-radius:99px;border:1px solid rgba(245,200,66,.3);margin-bottom:10px}
+.scan-add-new{width:100%;padding:10px;border-radius:8px;background:var(--green);color:#000;font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:700;border:none;cursor:pointer;margin-bottom:5px}
+.scan-add-dup{width:100%;padding:10px;border-radius:8px;background:var(--gold);color:#000;font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:700;border:none;cursor:pointer;margin-bottom:5px}
+.scan-retry{width:100%;background:none;border:none;color:var(--t3);font-family:'Outfit',sans-serif;font-size:.75rem;padding:5px;cursor:pointer}
+@keyframes scanmove{0%{top:0}50%{top:calc(100% - 2px)}100%{top:0}}
 #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(16px);background:#1a2236;border:1px solid rgba(255,255,255,.12);color:var(--t);font-size:.78rem;font-weight:500;padding:9px 16px;border-radius:99px;white-space:nowrap;z-index:200;opacity:0;transition:all .3s;pointer-events:none}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:99px}
@@ -225,12 +225,34 @@ body{background:var(--bg);color:var(--t);font-family:'Outfit',sans-serif;-webkit
 
 <div class="ov" id="mod"><div class="modal"><div class="mhandle"></div><div class="mtitle">🔄 Álbum Compartilhado</div><p class="msub">Sincronize em tempo real com outra pessoa</p><div id="sc"></div></div></div>
 <div class="ov" id="mod-wa"><div class="modal"><div class="mhandle"></div><div class="mtitle">📤 Compartilhar via WhatsApp</div><p class="msub">Lista de figurinhas faltantes e repetidas</p><div id="wa-prev"></div><button class="mbtn" onclick="sendWA()">Abrir WhatsApp</button><button class="mcbtn" onclick="closeMod()">Cancelar</button></div></div>
-<div class="ov" id="mod-sc"><div class="modal"><div class="mhandle"></div><div class="mtitle">📷 Scanner de Figurinha</div><p class="msub">Aponte para o código no canto superior direito (ex: PAN 9)</p>
-  <input type="file" id="scan-input" accept="image/*" capture="environment" style="display:none" onchange="handleScan(this)"/>
-  <canvas id="scan-cv" style="display:none"></canvas>
-  <div id="sp" style="display:none;text-align:center;padding:20px 0"><div style="font-size:2.5rem;margin-bottom:10px">⏳</div><p style="font-size:.85rem;color:var(--t2)">Lendo código...</p></div>
-  <div id="sr" style="display:none"></div>
-  <button class="mcbtn" onclick="closeMod()" style="margin-top:12px">Fechar</button>
+<div class="ov" id="mod-sc"><div class="modal" style="padding:0;border-radius:20px 20px 0 0;overflow:hidden">
+  <div style="padding:14px 16px 0;display:flex;align-items:center;justify-content:space-between;background:#0a0e1a">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--t)">📷 Scanner de Figurinha</div>
+    <button onclick="closeScan()" style="background:rgba(255,255,255,.08);border:1px solid var(--brd);color:var(--t2);border-radius:99px;padding:4px 10px;font-size:.72rem;cursor:pointer">Fechar</button>
+  </div>
+  <p style="font-size:.72rem;color:#f59e0b;padding:6px 16px 8px;background:#0a0e1a;margin:0">💡 Aponte para o verso da figurinha, onde está o código impresso</p>
+  <div style="position:relative;width:100%;aspect-ratio:1/1;background:#000;overflow:hidden" id="scan-viewport">
+    <video id="scan-video" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;display:block"></video>
+    <canvas id="scan-cv" style="display:none"></canvas>
+    <div id="scan-overlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+      <div id="scan-frame" style="width:72%;aspect-ratio:3/2;border:2px solid #3b5bdb;border-radius:10px;position:relative;box-shadow:0 0 0 9999px rgba(0,0,0,.55)">
+        <div id="scan-line" style="position:absolute;left:0;right:0;height:2px;background:rgba(59,91,219,.8);top:0"></div>
+        <div style="position:absolute;top:-1px;left:-1px;width:16px;height:16px;border-top:3px solid #fff;border-left:3px solid #fff;border-radius:2px 0 0 0"></div>
+        <div style="position:absolute;top:-1px;right:-1px;width:16px;height:16px;border-top:3px solid #fff;border-right:3px solid #fff;border-radius:0 2px 0 0"></div>
+        <div style="position:absolute;bottom:-1px;left:-1px;width:16px;height:16px;border-bottom:3px solid #fff;border-left:3px solid #fff;border-radius:0 0 0 2px"></div>
+        <div style="position:absolute;bottom:-1px;right:-1px;width:16px;height:16px;border-bottom:3px solid #fff;border-right:3px solid #fff;border-radius:0 0 2px 0"></div>
+      </div>
+    </div>
+    <div id="scan-err-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.8);align-items:center;justify-content:center;flex-direction:column;gap:10px">
+      <div style="font-size:2rem">📷</div>
+      <p style="color:#fff;font-size:.82rem;text-align:center;padding:0 20px">Câmera não disponível.<br><span style="color:#888;font-size:.72rem">Permite acesso à câmera nas configurações.</span></p>
+      <button onclick="initCamera()" style="background:var(--gold);color:#000;border:none;padding:8px 20px;border-radius:99px;font-weight:700;font-size:.8rem;cursor:pointer">Tentar novamente</button>
+    </div>
+  </div>
+  <div style="padding:10px 14px;background:#0a0e1a">
+    <div id="scan-status" style="font-size:.72rem;color:#888;text-align:center;margin-bottom:8px">Câmera iniciando...</div>
+    <div id="sr" style="display:none"></div>
+  </div>
 </div></div>
 
 <div id="toast"></div>
@@ -443,7 +465,7 @@ function openSync(){const c=el('sc');if(!DB){c.innerHTML='<p class="mmsg">⚠️
 async function doJoin(code){closeMod();const ok=await joinRoom(code);if(ok)setTimeout(openSync,400);}
 async function doJoinI(){const v=(el('ri')?el('ri').value:'').trim().toUpperCase();if(v.length<4){toast('⚠️ Código inválido');return;}closeMod();await joinRoom(v);}
 function cpCode(c){if(navigator.clipboard)navigator.clipboard.writeText(c).then(()=>toast('📋 '+c+' copiado!'));else toast('Código: '+c);}
-function closeMod(){['mod','mod-wa','mod-sc'].forEach(id=>el(id)&&el(id).classList.remove('open'));}
+function closeMod(){['mod','mod-wa'].forEach(id=>el(id)&&el(id).classList.remove('open'));closeScan();}
 
 // === WHATSAPP ===
 function buildWA(){const g=gStat();const lines=['🏆 *ÁLBUM COPA DO MUNDO 2026*','━━━━━━━━━━━━━','📊 '+g.have+'/'+TOTAL+' ('+g.pct+'%)','✅ '+g.have+'  ❌ '+g.miss+'  🔁 '+g.dups,''];const mi=[],re=[];
@@ -457,43 +479,129 @@ function sendWA(){window.open('https://api.whatsapp.com/send?text='+encodeURICom
 // === SCANNER ===
 const SLU={};COUNTRIES.forEach(c=>{SLU[c.px]={id:c.id,name:c.name,flag:c.flag,st:c.st};});SPECIALS.forEach(s=>{SLU[s.px]={id:s.id,name:s.name,flag:s.flag,st:s.st};});
 const SPX=Object.keys(SLU).sort((a,b)=>b.length-a.length);
-function parseC(raw){const t=raw.toUpperCase().replace(/[^A-Z0-9]/g,' ').replace(/\s+/g,' ').trim();for(const p of SPX){const m=t.match(new RegExp(p+'\\s*(\\d{1,2})\\b'));if(m){const n=parseInt(m[1]),sec=SLU[p];const x=sec.st.find(s=>s.n===n);if(x)return{px:p,n,id:sec.id,name:sec.name,flag:sec.flag,st:x};}}return null;}
 let TW=null;
+
+// === SCANNER (live camera) ===
+const SLU={};COUNTRIES.forEach(c=>{SLU[c.px]={id:c.id,name:c.name,flag:c.flag,st:c.st};});SPECIALS.forEach(s=>{SLU[s.px]={id:s.id,name:s.name,flag:s.flag,st:s.st};});
+const SPX=Object.keys(SLU).sort((a,b)=>b.length-a.length);
+function parseC(raw){const t=raw.toUpperCase().replace(/[^A-Z0-9]/g,' ').replace(/\s+/g,' ').trim();for(const p of SPX){const m=t.match(new RegExp(p+'\\s*(\\d{1,2})\\b'));if(m){const n=parseInt(m[1]),sec=SLU[p];const x=sec.st.find(s=>s.n===n);if(x)return{px:p,n,id:sec.id,name:sec.name,flag:sec.flag,st:x};}}return null;}
+
+let TW=null,scanStream=null,scanLoop=null,scanPaused=false,scanAnim=null;
+
 function openScan(){
-  // Open camera immediately — no intermediate screen
-  el('sp').style.display='none';el('sr').style.display='none';
-  el('scan-input').value='';
   el('mod-sc').classList.add('open');
-  loadT(); // preload Tesseract in background
-  // Trigger camera right away (must be direct user gesture)
-  el('scan-input').click();
+  el('sr').style.display='none';
+  el('scan-status').textContent='Câmera iniciando...';
+  el('scan-err-overlay').style.display='none';
+  scanPaused=false;
+  loadT();
+  initCamera();
 }
-function loadT(){return new Promise(res=>{if(TW){res();return;}if(window.Tesseract){mkTW().then(res);return;}const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=()=>mkTW().then(res);s.onerror=()=>res();document.head.appendChild(s);});}
-async function mkTW(){if(TW||!window.Tesseract)return;try{TW=await Tesseract.createWorker('eng',1,{workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core-simd-lstm.wasm.js',logger:()=>{}});await TW.setParameters({tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ',tessedit_pageseg_mode:'7'});}catch(e){TW=null;}}
-async function handleScan(input){const file=input.files&&input.files[0];if(!file)return;el('si').style.display='none';el('sp').style.display='block';el('sr').style.display='none';
-  try{if(!TW)await loadT();if(!TW){scanErr('❌ Leitor não carregou. Verifique sua conexão.');return;}
-  const img=await new Promise((res,rej)=>{const i=new Image();const u=URL.createObjectURL(file);i.onload=()=>{URL.revokeObjectURL(u);res(i);};i.onerror=rej;i.src=u;});
-  const canvas=el('scan-cv');const sx=Math.floor(img.width*0.52),sw=Math.floor(img.width*0.46),sh=Math.floor(img.height*0.20),sc=4;
-  canvas.width=sw*sc;canvas.height=sh*sc;const ctx=canvas.getContext('2d');ctx.filter='contrast(3) brightness(1.3) grayscale(1)';ctx.drawImage(img,sx,0,sw,sh,0,0,canvas.width,canvas.height);
-  let res=null;const{data:{text:t1}}=await TW.recognize(canvas);res=parseC(t1);
-  if(!res){const c2=document.createElement('canvas');const s2=Math.min(1200/img.width,1);c2.width=Math.floor(img.width*s2);c2.height=Math.floor(img.height*s2);const cx=c2.getContext('2d');cx.filter='contrast(2) grayscale(1)';cx.drawImage(img,0,0,c2.width,c2.height);const{data:{text:t2}}=await TW.recognize(c2);res=parseC(t2);}
-  if(res)scanOk(res);else scanErr('🔍 Código não encontrado.<br><small>Aproxime mais a câmera do canto superior direito</small>');
-  }catch(e){scanErr('❌ Erro: '+(e.message||''));}}
-function scanErr(msg){
-  el('sp').style.display='none';
-  const r=el('sr');r.style.display='block';
-  r.innerHTML='<div class="scan-res-err">'+msg+'<br><button class="scan-retry" onclick="retryScan()">📸 Tentar novamente</button></div>';
+
+function closeScan(){
+  stopCamera();
+  el('mod-sc').classList.remove('open');
+  el('sr').style.display='none';
+  scanPaused=false;
 }
+
+async function initCamera(){
+  try{
+    if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}
+    scanStream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false
+    });
+    const v=el('scan-video');
+    v.srcObject=scanStream;
+    await new Promise((res,rej)=>{v.onloadedmetadata=()=>v.play().then(res).catch(rej);setTimeout(rej,8000);});
+    el('scan-status').textContent='🔍 Aponte o código no verso da figurinha';
+    el('scan-err-overlay').style.display='none';
+    startScanLine();
+    startScanLoop();
+  }catch(e){
+    el('scan-err-overlay').style.display='flex';
+    el('scan-status').textContent='Câmera bloqueada';
+  }
+}
+
+function stopCamera(){
+  clearInterval(scanLoop);scanLoop=null;
+  cancelAnimationFrame(scanAnim);scanAnim=null;
+  if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}
+  const v=el('scan-video');if(v){v.srcObject=null;}
+}
+
+function startScanLine(){
+  const line=el('scan-line');
+  const frame=el('scan-frame');
+  if(!line||!frame)return;
+  let dir=1,pos=0;
+  function animate(){
+    pos+=dir*1.5;
+    const maxH=frame.clientHeight;
+    if(pos>=maxH-2){dir=-1;pos=maxH-2;}
+    if(pos<=0){dir=1;pos=0;}
+    line.style.top=pos+'px';
+    scanAnim=requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+function startScanLoop(){
+  clearInterval(scanLoop);
+  let busy=false;
+  scanLoop=setInterval(async()=>{
+    if(busy||scanPaused||!TW)return;
+    busy=true;
+    try{
+      const v=el('scan-video');
+      if(!v||!v.videoWidth){busy=false;return;}
+      // Crop center 60% width, 40% height (where viewfinder is)
+      const vw=v.videoWidth,vh=v.videoHeight;
+      const cx=Math.floor(vw*0.20),cw=Math.floor(vw*0.60);
+      const cy=Math.floor(vh*0.30),ch=Math.floor(vh*0.40);
+      const cv=el('scan-cv');
+      cv.width=cw*3;cv.height=ch*3;
+      const ctx=cv.getContext('2d');
+      ctx.filter='contrast(2.5) brightness(1.3) grayscale(1)';
+      ctx.drawImage(v,cx,cy,cw,ch,0,0,cv.width,cv.height);
+      const{data:{text}}=await TW.recognize(cv);
+      const res=parseC(text);
+      if(res){scanPaused=true;clearInterval(scanLoop);scanOk(res);}
+    }catch(e){}
+    busy=false;
+  },900);
+}
+
+function loadT(){
+  return new Promise(res=>{
+    if(TW){res();return;}
+    if(window.Tesseract){mkTW().then(res);return;}
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.onload=()=>mkTW().then(res);s.onerror=()=>res();
+    document.head.appendChild(s);
+  });
+}
+async function mkTW(){
+  if(TW||!window.Tesseract)return;
+  try{
+    TW=await Tesseract.createWorker('eng',1,{
+      workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
+      corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core-simd-lstm.wasm.js',
+      logger:()=>{}
+    });
+    await TW.setParameters({tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ',tessedit_pageseg_mode:'7'});
+  }catch(e){TW=null;}
+}
+
 function scanOk(res){
-  el('sp').style.display='none';
-  const parts=res.st.lb.split(' · '), nm=parts[1]||res.st.lb;
+  const parts=res.st.lb.split(' · '),nm=parts[1]||res.st.lb;
   const cur=(ST[res.id]||{})[String(res.n)]||0;
   const isNew=cur===0;
-  const r=el('sr'); r.style.display='block';
-
-  // Find country/section name for subtitle
-  const sec=SLU[res.px]; const secName=sec?sec.name:'';
-
+  const sec=SLU[res.px];const secName=sec?sec.name:'';
+  el('scan-status').textContent=isNew?'✨ Figurinha identificada!':'🔁 Figurinha identificada!';
+  const r=el('sr');r.style.display='block';
   if(isNew){
     r.innerHTML=
       '<div class="scan-res-new">'
@@ -502,25 +610,41 @@ function scanOk(res){
       +'<span class="scan-nm">'+nm+'</span>'
       +'<span class="scan-ctry">'+secName+'</span>'
       +'<button class="scan-add-new" onclick="confScan(\''+res.id+'\','+res.n+',\''+res.px+res.n+'\')">✅ Adicionar ao álbum</button>'
-      +'<button class="scan-retry" onclick="retryScan()">📸 Escanear outra</button>'
+      +'<button class="scan-retry" onclick="resumeScan()">🔄 Continuar escaneando</button>'
       +'</div>';
-  } else {
+  }else{
     r.innerHTML=
       '<div class="scan-res-dup">'
       +'<div class="scan-badge scan-badge-dup">🔁 Figurinha repetida</div>'
       +'<span class="scan-code">'+res.flag+' '+res.px+res.n+'</span>'
       +'<span class="scan-nm">'+nm+'</span>'
       +'<span class="scan-ctry">'+secName+'</span>'
-      +'<div class="scan-cpill">Você já tem '+cur+(cur===1?' cópia':' cópias')+' desta</div>'
+      +'<div class="scan-cpill">Você já tem '+cur+(cur===1?' cópia':' cópias')+'</div>'
       +'<button class="scan-add-dup" onclick="confScan(\''+res.id+'\','+res.n+',\''+res.px+res.n+'\')">➕ Adicionar como repetida</button>'
-      +'<button class="scan-retry" onclick="retryScan()">📸 Escanear outra</button>'
+      +'<button class="scan-retry" onclick="resumeScan()">🔄 Continuar escaneando</button>'
       +'</div>';
   }
 }
-function confScan(id,n,code){if(!ST[id])ST[id]={};const c=(ST[id][n]||0)+1;ST[id][n]=c;save();toast(c===1?'✅ '+code+' adicionada!':'🔁 '+code+' — repetida #'+(c-1)+' contabilizada!');retryScan();if(!CC&&!CS)renderHome();}
-function retryScan(){el('sr').style.display='none';el('sp').style.display='none';el('scan-input').value='';el('scan-input').click();}
 
-// === TOAST ===
+function confScan(id,n,code){
+  if(!ST[id])ST[id]={};
+  const c=(ST[id][n]||0)+1;ST[id][n]=c;save();
+  toast(c===1?'✅ '+code+' adicionada!':'🔁 '+code+' — repetida #'+(c-1)+' contabilizada!');
+  resumeScan();
+  if(!CC&&!CS)renderHome();
+}
+
+function resumeScan(){
+  el('sr').style.display='none';
+  el('scan-status').textContent='🔍 Aponte o código no verso da figurinha';
+  scanPaused=false;
+  startScanLoop();
+}
+
+// Legacy - not used but kept to avoid reference errors
+function handleScan(){}
+function retryScan(){resumeScan();}
+
 let _tt=null;
 function toast(m){const t=el('toast');if(!t)return;t.textContent=m;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2800);}
 
